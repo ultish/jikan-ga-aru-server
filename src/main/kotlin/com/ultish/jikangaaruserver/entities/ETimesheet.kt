@@ -8,19 +8,19 @@ import java.util.*
 
 @Document
 @QueryEntity
-class Timesheet(
+class ETimesheet(
    @Id
    val id: String,
    val weekEndingDate: Date,
-   val user: User,
-   val timeCharged: List<TimeCharge>,
-   val trackedDays: List<TrackedDay>
+   val EUser: EUser,
+   val ETimeCharged: List<ETimeCharge>,
+   val ETrackedDays: List<ETrackedDay>
 ) : GraphQLEntity<Timesheet> {
    override fun toGqlType(): Timesheet =
       Timesheet(id,
          weekEndingDate.time.toInt(),
-         user.toGqlType(),
-         timeCharged.map { it.toGqlType() },
-         trackedDays.map { it.toGqlType() }
+         EUser.toGqlType(),
+         ETimeCharged.map { it.toGqlType() },
+         ETrackedDays.map { it.toGqlType() }
       )
 }

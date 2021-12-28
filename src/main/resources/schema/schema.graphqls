@@ -69,3 +69,13 @@ type User {
     id: ID!
     username: String!
 }
+
+
+type Query {
+    users(username: String): [User]
+}
+
+type Mutation {
+    createUser(username: String!, password: String!): User
+    deleteUser(username: String!): Boolean
+}

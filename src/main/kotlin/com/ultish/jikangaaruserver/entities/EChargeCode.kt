@@ -7,14 +7,14 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
 @QueryEntity
-class ChargeCode(
+class EChargeCode(
    @Id
    val id: String,
    val name: String,
    val code: String,
    val description: String,
    val expired: Boolean
-): GraphQLEntity<ChargeCode> {
+) : GraphQLEntity<ChargeCode> {
    override fun toGqlType(): ChargeCode =
       ChargeCode(id, name, code, description, expired)
 }

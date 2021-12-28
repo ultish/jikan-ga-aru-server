@@ -9,19 +9,19 @@ import java.util.*
 
 @Document
 @QueryEntity
-class TrackedDay(
+class ETrackedDay(
    @Id
    val id: String,
    val date: Date,
    val mode: DayMode,
-   val user: User,
-   val tasks: List<TrackedTask>
+   val EUser: EUser,
+   val tasks: List<ETrackedTask>
 ) : GraphQLEntity<TrackedDay> {
    override fun toGqlType(): TrackedDay =
       TrackedDay(id,
          date.time.toInt(),
          mode,
-         user.toGqlType(),
+         EUser.toGqlType(),
          tasks.map { it.toGqlType() }
       )
 }

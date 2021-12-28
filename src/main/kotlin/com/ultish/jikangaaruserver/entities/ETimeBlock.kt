@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
 @QueryEntity
-class TimeBlock(
+class ETimeBlock(
    @Id
    val id: String,
    val timeSlot: Int

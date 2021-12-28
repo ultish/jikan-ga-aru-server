@@ -8,18 +8,18 @@ import java.util.*
 
 @Document
 @QueryEntity
-class TimeCharge(
+class ETimeCharge(
    @Id
    val id: String,
    val date: Date,
-   val chargeCode: ChargeCode,
+   val EChargeCode: EChargeCode,
    val value: Double
 ) : GraphQLEntity<TimeCharge> {
    override fun toGqlType(): TimeCharge =
       TimeCharge(
          id,
          date.time.toInt(),
-         chargeCode.toGqlType(),
+         EChargeCode.toGqlType(),
          value
       )
 }

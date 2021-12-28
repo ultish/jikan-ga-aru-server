@@ -7,18 +7,18 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
 @QueryEntity
-class TrackedTask(
+class ETrackedTask(
    @Id
    val id: String,
    val notes: String,
-   val chargeCodes: List<ChargeCode>,
-   val timeBlocks: List<TimeBlock>
+   val EChargeCodes: List<EChargeCode>,
+   val ETimeBlocks: List<ETimeBlock>
 ) : GraphQLEntity<TrackedTask> {
    override fun toGqlType(): TrackedTask =
       TrackedTask(
          id,
          notes,
-         chargeCodes.map { it.toGqlType() },
-         timeBlocks.map { it.toGqlType() }
+         EChargeCodes.map { it.toGqlType() },
+         ETimeBlocks.map { it.toGqlType() }
       )
 }
