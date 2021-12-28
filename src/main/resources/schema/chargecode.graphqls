@@ -1,0 +1,16 @@
+extend type Query {
+    chargeCodes(ids: [ID!], name: String, code: String, description: String, expired: Boolean): [ChargeCode]
+}
+
+extend type Mutation {
+    createChargeCode(name: String!, code: String!, description: String, expired: Boolean=false): ChargeCode
+    deleteChargeCode(code: String!): Boolean
+}
+
+type ChargeCode {
+    id: ID!
+    name: String!
+    code: String!
+    description: String
+    expired: Boolean!
+}

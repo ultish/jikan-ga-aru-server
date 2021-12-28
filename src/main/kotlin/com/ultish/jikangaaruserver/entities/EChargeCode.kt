@@ -12,7 +12,7 @@ class EChargeCode(
    val id: String,
    val name: String,
    val code: String,
-   val description: String,
+   val description: String?,
    val expired: Boolean
 ) : GraphQLEntity<ChargeCode> {
    override fun toGqlType(): ChargeCode =
