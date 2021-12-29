@@ -7,19 +7,19 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.util.*
 
-@Document
+@Document(value = "trackedDay")
 @QueryEntity
-class ETrackedDay(
+data class ETrackedDay(
    @Id
    val id: String,
    val date: Date,
    val mode: DayMode,
    val EUser: EUser,
-   val tasks: List<ETrackedTask>
+   var tasks: List<ETrackedTask> = listOf(),
 ) : GraphQLEntity<TrackedDay> {
    override fun toGqlType(): TrackedDay =
       TrackedDay(id,
-         date.time.toInt(),
+         date.time.toDouble(),
          mode,
          EUser.toGqlType(),
          tasks.map { it.toGqlType() }

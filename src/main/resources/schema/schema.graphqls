@@ -1,3 +1,10 @@
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
 enum DayMode {
     NORMAL
     HOL_PUBLIC
@@ -8,7 +15,7 @@ enum DayMode {
 
 type Timesheet {
     id: ID!
-    weekEndingDate: Int!
+    weekEndingDate: Float!
     user: User!
     timeCharged: [TimeCharge!]
     trackedDays: [TrackedDay!]
@@ -16,22 +23,11 @@ type Timesheet {
 
 type TimeCharge {
     id: ID!
-    date: Int!
+    date: Float!
     chargeCode: ChargeCode!
     value: Float!
 }
 
-# each tracked day will have a max of 240 timeslots (if you work 24hrs!)
-type TrackedDay {
-    id: ID!
-    date: Int!
-    mode: DayMode!
-    user: User!
-
-    tasks: [TrackedTask!]
-    #    timeSlots: [TimeSlot]!
-    timeCharges: [TimeCharge!]
-}
 # TODO question is do we store vertically or horizontally via TimeBlocks
 type TimeSlot {
     id: ID!

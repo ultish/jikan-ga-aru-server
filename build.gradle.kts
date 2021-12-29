@@ -20,7 +20,8 @@ repositories {
 dependencies {
    implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:latest.release"))
    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
-
+//   implementation("com.netflix.graphql.dgs:graphql-dgs-pagination")
+   
    implementation("com.querydsl:querydsl-mongodb:5.0.0")
    implementation("com.querydsl:querydsl-apt:5.0.0")
 

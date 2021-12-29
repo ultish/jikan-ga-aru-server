@@ -5,9 +5,9 @@ import com.ultish.generated.types.ChargeCode
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document
+@Document(value = "chargeCode")
 @QueryEntity
-class EChargeCode(
+data class EChargeCode(
    @Id
    val id: String,
    val name: String,

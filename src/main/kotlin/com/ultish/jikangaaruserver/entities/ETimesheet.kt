@@ -6,19 +6,19 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.util.*
 
-@Document
+@Document(value = "timesheet")
 @QueryEntity
-class ETimesheet(
+data class ETimesheet(
    @Id
    val id: String,
    val weekEndingDate: Date,
    val EUser: EUser,
    val ETimeCharged: List<ETimeCharge>,
-   val ETrackedDays: List<ETrackedDay>
+   val ETrackedDays: List<ETrackedDay>,
 ) : GraphQLEntity<Timesheet> {
    override fun toGqlType(): Timesheet =
       Timesheet(id,
-         weekEndingDate.time.toInt(),
+         weekEndingDate.time.toDouble(),
          EUser.toGqlType(),
          ETimeCharged.map { it.toGqlType() },
          ETrackedDays.map { it.toGqlType() }

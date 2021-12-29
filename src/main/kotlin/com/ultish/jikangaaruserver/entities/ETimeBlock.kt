@@ -5,9 +5,9 @@ import com.ultish.generated.types.TimeBlock
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document
+@Document(value = "timeBlock")
 @QueryEntity
-class ETimeBlock(
+data class ETimeBlock(
    @Id
    val id: String,
    val timeSlot: Int

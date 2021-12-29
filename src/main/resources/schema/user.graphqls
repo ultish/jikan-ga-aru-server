@@ -10,4 +10,6 @@ extend type Mutation {
 type User {
     id: ID!
     username: String!
+    trackedDays: [TrackedDay!]
+    #timesheets: [Timesheet!]
 }

@@ -22,7 +22,7 @@ class ChargeCodeDataFetcher {
       @InputArgument name: String?,
       @InputArgument code: String?,
       @InputArgument description: String?,
-      @InputArgument expired: Boolean?
+      @InputArgument expired: Boolean?,
    ): List<ChargeCode> {
       val builder = BooleanBuilder()
 
@@ -44,14 +44,6 @@ class ChargeCodeDataFetcher {
 
    @DgsMutation
    fun deleteChargeCode(@InputArgument code: String): Boolean {
-      val toDelete = repository.findOne(
-         QEChargeCode.eChargeCode.code.equalsIgnoreCase(code)
-      )
-
-      if (toDelete.isPresent) {
-         repository.delete(toDelete.get())
-         return true
-      }
-      return false
+      return delete(repository, QEChargeCode.eChargeCode.code, code)
    }
 }

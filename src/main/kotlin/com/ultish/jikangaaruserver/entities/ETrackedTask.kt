@@ -5,9 +5,9 @@ import com.ultish.generated.types.TrackedTask
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document
+@Document(value = "trackedTask")
 @QueryEntity
-class ETrackedTask(
+data class ETrackedTask(
    @Id
    val id: String,
    val notes: String,

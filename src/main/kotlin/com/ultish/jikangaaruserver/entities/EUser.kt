@@ -5,9 +5,9 @@ import com.ultish.generated.types.User
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document
+@Document(value = "user")
 @QueryEntity
-class EUser(
+data class EUser(
    @Id
    val id: String,
    val username: String,

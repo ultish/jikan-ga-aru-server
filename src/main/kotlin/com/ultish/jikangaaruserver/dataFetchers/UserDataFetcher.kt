@@ -19,7 +19,7 @@ class UserDataFetcher {
 
    @DgsQuery
    fun users(
-      @InputArgument username: String?
+      @InputArgument username: String?,
    ): List<User> {
       val builder = BooleanBuilder()
 
@@ -33,7 +33,7 @@ class UserDataFetcher {
    @DgsMutation
    fun createUser(
       @InputArgument username: String,
-      @InputArgument password: String
+      @InputArgument password: String,
    ): User {
       return repository.save(
          com.ultish.jikangaaruserver.entities.EUser(
@@ -46,15 +46,6 @@ class UserDataFetcher {
 
    @DgsMutation
    fun deleteUser(@InputArgument username: String): Boolean {
-      val toDelete = repository.findOne(
-         QEUser.eUser.username
-            .equalsIgnoreCase(username)
-      )
-
-      if (toDelete.isPresent) {
-         repository.delete(toDelete.get())
-         return true
-      }
-      return false
+      return delete(repository, QEUser.eUser.username, username)
    }
 }

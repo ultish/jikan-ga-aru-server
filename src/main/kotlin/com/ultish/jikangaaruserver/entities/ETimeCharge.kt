@@ -6,19 +6,19 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.util.*
 
-@Document
+@Document(value = "timeCharge")
 @QueryEntity
-class ETimeCharge(
+data class ETimeCharge(
    @Id
    val id: String,
    val date: Date,
    val EChargeCode: EChargeCode,
-   val value: Double
+   val value: Double,
 ) : GraphQLEntity<TimeCharge> {
    override fun toGqlType(): TimeCharge =
       TimeCharge(
          id,
-         date.time.toInt(),
+         date.time.toDouble(),
          EChargeCode.toGqlType(),
          value
       )

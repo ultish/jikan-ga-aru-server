@@ -1,0 +1,34 @@
+extend type Query  {
+    trackedDays: [TrackedDay!]
+    trackedDaysPaginated(
+        after: String,
+        first: Int
+    ): TrackedDayConnection
+}
+
+extend type Mutation {
+    createTrackedDay(username: String!, date: Float!, mode: DayMode): TrackedDay
+    deleteTrackedDay(id: ID!): Boolean
+    updateTrackedDay(id: ID!, mode: DayMode, date: Float): TrackedDay
+}
+
+# each tracked day will have a max of 240 timeslots (if you work 24hrs!)
+type TrackedDay {
+    id: ID!
+    date: Float!
+    mode: DayMode!
+    user: User!
+
+    tasks: [TrackedTask!]
+    timeCharges: [TimeCharge!]
+}
+
+type TrackedDayConnection {
+    pageInfo: PageInfo!
+    edges: [TrackedDayEdge]
+}
+
+type TrackedDayEdge {
+    cursor: String!
+    node: TrackedDay
+}
