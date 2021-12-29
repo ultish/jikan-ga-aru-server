@@ -23,11 +23,12 @@ type TrackedDay {
     timeCharges: [TimeCharge!]
 }
 
+# the @connection directive is meant to work but it clashes with dgs-codegen plugin (not supported yet, but there's
+#  an untouched PR...). For now, implementing the types manually here
 type TrackedDayConnection {
     pageInfo: PageInfo!
     edges: [TrackedDayEdge]
 }
-
 type TrackedDayEdge {
     cursor: String!
     node: TrackedDay
