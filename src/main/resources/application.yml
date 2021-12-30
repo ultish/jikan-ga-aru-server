@@ -7,15 +7,11 @@ spring:
       auto-index-creation: true
 
 
-#logging:
-#  level:
-#    com:
-#      netflix:
-#        graphql:
-#          dgs: DEBUG
-#    org:
-#      springframework: DEBUG
-#        data:
-#          mongodb:
-#            core:
-#              MongoTemplate: DEBUG
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: DEBUG

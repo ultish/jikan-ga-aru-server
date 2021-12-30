@@ -29,7 +29,7 @@ class UserDataFetcher {
    /**
     * This data-loader will batch load User objects via the User ID
     */
-   @DgsDataLoader(name = "usersForTrackedDays")
+   @DgsDataLoader(name = "usersForTrackedDays", caching = true)
    val userBatchLoader = BatchLoader<String, User> {
       future(repository, QEUser.eUser.trackedDayIds.any().`in`(it))
    }

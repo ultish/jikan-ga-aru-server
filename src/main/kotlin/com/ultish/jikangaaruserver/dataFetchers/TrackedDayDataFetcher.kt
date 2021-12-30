@@ -30,7 +30,7 @@ class TrackedDayDataFetcher {
    @Autowired
    lateinit var userRepository: UserRepository
 
-   @DgsDataLoader(name = "trackedDaysForUsers")
+   @DgsDataLoader(name = "trackedDaysForUsers", caching = true)
    val trackedDayBatchLoader = MappedBatchLoader<String, List<TrackedDay>> {
       CompletableFuture.supplyAsync {
          repository.findAll(BooleanBuilder(QETrackedDay.eTrackedDay.userId.`in`(it)))
