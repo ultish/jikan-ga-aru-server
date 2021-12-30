@@ -24,31 +24,15 @@ import java.util.concurrent.CompletableFuture
 @DgsComponent
 class TrackedDayDataFetcher {
 
+   companion object {
+      const val DATA_LOADER_FOR_USERS = "trackedDaysForUsers"
+   }
+
    @Autowired
    lateinit var repository: TrackedDayRepository
 
    @Autowired
    lateinit var userRepository: UserRepository
-
-   @DgsDataLoader(name = "trackedDaysForUsers", caching = true)
-   val trackedDayBatchLoader = MappedBatchLoader<String, List<TrackedDay>> {
-      CompletableFuture.supplyAsync {
-         repository.findAll(BooleanBuilder(QETrackedDay.eTrackedDay.userId.`in`(it)))
-            .groupBy({ it.userId }, { it.toGqlType() })
-      }
-   }
-
-   /**
-    * This Data Fetcher is for the TrackedDay type's User field. When graphQl requests the
-    * User field on a TrackedDay type we'll pass it onto the "users" DataLoader in order
-    * to batch the fetches
-    */
-   @DgsData(parentType = DgsConstants.TRACKEDDAY.TYPE_NAME, field = DgsConstants.TRACKEDDAY.User)
-   fun usersForTrackedDays(dfe: DataFetchingEnvironment): CompletableFuture<User> {
-      val dataLoader: DataLoader<String, User> = dfe.getDataLoader("usersForTrackedDays")
-      val trackedDay = dfe.getSource<TrackedDay>()
-      return dataLoader.load(trackedDay.id)
-   }
 
    @DgsQuery
    fun trackedDays(): List<TrackedDay> {
@@ -94,4 +78,31 @@ class TrackedDayDataFetcher {
 
       return trackedDay.toGqlType()
    }
+
+   //
+   // Document References (relationships)
+   // -------------------------------------------------------------------------
+   /**
+    * This Data Fetcher is for the TrackedDay type's User field. When graphQl requests the
+    * User field on a TrackedDay type we'll pass it onto the "users" DataLoader in order
+    * to batch the fetches
+    */
+   @DgsData(parentType = DgsConstants.TRACKEDDAY.TYPE_NAME, field = DgsConstants.TRACKEDDAY.User)
+   fun usersForTrackedDays(dfe: DataFetchingEnvironment): CompletableFuture<User> {
+      val dataLoader: DataLoader<String, User> = dfe.getDataLoader(UserDataFetcher.DATA_LOADER_FOR_TRACKED_DAYS)
+      val trackedDay = dfe.getSource<TrackedDay>()
+      return dataLoader.load(trackedDay.id)
+   }
+
+   //
+   // Data Loaders
+   // -------------------------------------------------------------------------
+   @DgsDataLoader(name = DATA_LOADER_FOR_USERS, caching = true)
+   val trackedDayBatchLoader = MappedBatchLoader<String, List<TrackedDay>> {
+      CompletableFuture.supplyAsync {
+         repository.findAll(BooleanBuilder(QETrackedDay.eTrackedDay.userId.`in`(it)))
+            .groupBy({ it.userId }, { it.toGqlType() })
+      }
+   }
+
 }

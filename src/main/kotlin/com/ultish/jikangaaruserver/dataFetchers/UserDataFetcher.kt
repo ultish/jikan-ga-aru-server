@@ -17,29 +17,12 @@ import java.util.concurrent.CompletableFuture
 @DgsComponent
 class UserDataFetcher {
 
+   companion object {
+      const val DATA_LOADER_FOR_TRACKED_DAYS = "usersForTrackedDays"
+   }
+
    @Autowired
    lateinit var repository: UserRepository
-
-   /**
-    * TODO unsure if use of DgsDataLoaders is useful in this small app vs just using Mongo/Spring
-    *  to eagerly load all relationships every time. Probably no noticeable performance for this
-    *  application. But a good study exercise.
-    */
-
-   /**
-    * This data-loader will batch load User objects via the User ID
-    */
-   @DgsDataLoader(name = "usersForTrackedDays", caching = true)
-   val userBatchLoader = BatchLoader<String, User> {
-      future(repository, QEUser.eUser.trackedDayIds.any().`in`(it))
-   }
-
-   @DgsData(parentType = DgsConstants.USER.TYPE_NAME, field = DgsConstants.USER.TrackedDays)
-   fun trackedDaysForUser(dfe: DataFetchingEnvironment): CompletableFuture<List<TrackedDay>> {
-      val dataLoader: DataLoader<String, List<TrackedDay>> = dfe.getDataLoader("trackedDaysForUsers")
-      val user = dfe.getSource<User>()
-      return dataLoader.load(user.id)
-   }
 
    @DgsQuery
    fun users(
@@ -72,5 +55,32 @@ class UserDataFetcher {
    @DgsMutation
    fun deleteUser(@InputArgument username: String): Boolean {
       return delete(repository, QEUser.eUser.username, username)
+   }
+
+   //
+   // Document References (relationships)
+   // -------------------------------------------------------------------------
+   @DgsData(parentType = DgsConstants.USER.TYPE_NAME, field = DgsConstants.USER.TrackedDays)
+   fun trackedDaysForUser(dfe: DataFetchingEnvironment): CompletableFuture<List<TrackedDay>> {
+      val dataLoader: DataLoader<String, List<TrackedDay>> =
+         dfe.getDataLoader(TrackedDayDataFetcher.DATA_LOADER_FOR_USERS)
+      val user = dfe.getSource<User>()
+      return dataLoader.load(user.id)
+   }
+
+   //
+   // Data Loaders
+   // -------------------------------------------------------------------------
+   /**
+    * TODO unsure if use of DgsDataLoaders is useful in this small app vs just using Mongo/Spring
+    *  to eagerly load all relationships every time. Probably no noticeable performance for this
+    *  application. But a good study exercise.
+    */
+   /**
+    * This data-loader will batch load User objects via the User ID
+    */
+   @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_DAYS, caching = true)
+   val userBatchLoader = BatchLoader<String, User> {
+      future(repository, QEUser.eUser.trackedDayIds.any().`in`(it))
    }
 }
