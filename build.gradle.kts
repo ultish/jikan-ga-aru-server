@@ -4,6 +4,7 @@ plugins {
    id("com.netflix.dgs.codegen") version "5.1.14"
    id("org.springframework.boot") version "2.6.2"
    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+   id("org.jetbrains.kotlin.plugin.allopen") version "1.6.10"
    kotlin("jvm") version "1.6.10"
    kotlin("plugin.spring") version "1.6.10"
    kotlin("kapt") version "1.6.10"
@@ -21,7 +22,7 @@ dependencies {
    implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:latest.release"))
    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
 //   implementation("com.netflix.graphql.dgs:graphql-dgs-pagination")
-   
+
    implementation("com.querydsl:querydsl-mongodb:5.0.0")
    implementation("com.querydsl:querydsl-apt:5.0.0")
 
@@ -35,6 +36,11 @@ dependencies {
    kapt("com.querydsl:querydsl-apt:5.0.0:general")
 
    testImplementation("org.springframework.boot:spring-boot-starter-test")
+   testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+}
+
+allOpen {
+   annotation("org.springframework.data.mongodb.core.mapping.Document")
 }
 
 tasks.withType<com.netflix.graphql.dgs.codegen.gradle.GenerateJavaTask> {

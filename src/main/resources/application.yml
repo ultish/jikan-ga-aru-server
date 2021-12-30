@@ -4,3 +4,18 @@ spring:
       host: localhost
       port: 27017
       database: jikan-ga-aru
+      auto-index-creation: true
+
+
+#logging:
+#  level:
+#    com:
+#      netflix:
+#        graphql:
+#          dgs: DEBUG
+#    org:
+#      springframework: DEBUG
+#        data:
+#          mongodb:
+#            core:
+#              MongoTemplate: DEBUG

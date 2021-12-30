@@ -23,4 +23,6 @@ data class ETimesheet(
          ETimeCharged.map { it.toGqlType() },
          ETrackedDays.map { it.toGqlType() }
       )
+
+   override fun id(): String = id
 }

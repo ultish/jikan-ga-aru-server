@@ -12,7 +12,7 @@ data class ETrackedTask(
    val id: String,
    val notes: String,
    val EChargeCodes: List<EChargeCode>,
-   val ETimeBlocks: List<ETimeBlock>
+   val ETimeBlocks: List<ETimeBlock>,
 ) : GraphQLEntity<TrackedTask> {
    override fun toGqlType(): TrackedTask =
       TrackedTask(
@@ -21,4 +21,6 @@ data class ETrackedTask(
          EChargeCodes.map { it.toGqlType() },
          ETimeBlocks.map { it.toGqlType() }
       )
+
+   override fun id(): String = id
 }

@@ -22,4 +22,6 @@ data class ETimeCharge(
          EChargeCode.toGqlType(),
          value
       )
+
+   override fun id(): String = id
 }

@@ -17,8 +17,8 @@ type TrackedDay {
     id: ID!
     date: Float!
     mode: DayMode!
-    user: User!
 
+    user: User
     tasks: [TrackedTask!]
     timeCharges: [TimeCharge!]
 }

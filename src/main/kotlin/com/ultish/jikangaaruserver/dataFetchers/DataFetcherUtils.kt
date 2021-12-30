@@ -1,5 +1,7 @@
 package com.ultish.jikangaaruserver.dataFetchers
 
+import com.querydsl.core.BooleanBuilder
+import com.querydsl.core.types.Predicate
 import com.querydsl.core.types.dsl.StringPath
 import com.ultish.jikangaaruserver.entities.GraphQLEntity
 import graphql.relay.*
@@ -10,6 +12,8 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 
 /**
  * Utility to delete an Entity via a String-based key. (eg id, name etc).
@@ -57,22 +61,19 @@ fun createCursor(index: Int, pageNumber: Int, size: Int): String {
  */
 fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    repository: R,
-   after: String?,
-   first: Int?,
    sortKey: String,
+   after: String? = null,
+   first: Int? = null,
 ): Connection<G>
    where R : QuerydslPredicateExecutor<E>,
          R : MongoRepository<E, String> {
-   val index = after?.let { decode(it) } ?: -1
-   val size = first ?: 10;
-   val pageNumber = (index + 1) / size;
 
-   val pagable: Pageable = PageRequest.of(pageNumber, size, Sort.by(sortKey))
+   val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, after, first)
    val page = repository.findAll(pagable)
 
    val edges = page.mapIndexed { index, it ->
       val gqlType = it.toGqlType()
-      val cursor = createCursor(index, pageNumber, size)
+      val cursor = createCursor(index, pageNumber, itemsPerPage)
       DefaultEdge(gqlType, DefaultConnectionCursor(cursor))
    }
    val pageInfo = DefaultPageInfo(
@@ -83,4 +84,32 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    )
 
    return DefaultConnection(edges, pageInfo)
+}
+
+fun createPageable(
+   sortKey: String,
+   after: String? = null,
+   first: Int? = null,
+): Triple<Pageable, Int, Int> {
+   val index = after?.let { decode(it) } ?: -1
+   val itemsPerPage = first ?: 10;
+   val pageNumber = (index + 1) / itemsPerPage;
+
+   return Triple(
+      PageRequest.of(pageNumber, itemsPerPage, Sort.by(sortKey)),
+      pageNumber,
+      itemsPerPage
+   )
+}
+
+fun <G, E : GraphQLEntity<G>, R> future(repository: R, predicate: Predicate)
+   : CompletionStage<List<G>>
+   where R : QuerydslPredicateExecutor<E>,
+         R : MongoRepository<E, String> {
+   return CompletableFuture.supplyAsync {
+      repository.findAll(BooleanBuilder(predicate))
+         .map {
+            it.toGqlType()
+         }
+   }
 }

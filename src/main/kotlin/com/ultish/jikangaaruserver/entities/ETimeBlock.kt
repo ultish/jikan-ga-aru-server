@@ -10,8 +10,10 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class ETimeBlock(
    @Id
    val id: String,
-   val timeSlot: Int
+   val timeSlot: Int,
 ) : GraphQLEntity<TimeBlock> {
    override fun toGqlType(): TimeBlock =
       TimeBlock(id, timeSlot)
+
+   override fun id(): String = id
 }

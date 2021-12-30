@@ -33,7 +33,7 @@ class UserDataFetcherTest {
       ).thenAnswer {
          listOf(
             EUser(
-               id = "1-2-3-4", username = "jxhui", password = "password"
+               id = "1-2-3-4", username = "jxhui", password = "password", trackedDayIds = mutableListOf()
             )
          )
       }
