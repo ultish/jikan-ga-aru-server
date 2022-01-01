@@ -1,8 +1,10 @@
-package com.ultish.jikangaaruserver.entities
+package com.ultish.jikangaaruserver.trackedDays
 
 import com.querydsl.core.annotations.QueryEntity
 import com.ultish.generated.types.DayMode
 import com.ultish.generated.types.TrackedDay
+import com.ultish.jikangaaruserver.entities.GraphQLEntity
+import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
@@ -12,7 +14,7 @@ import java.util.*
 @QueryEntity
 data class ETrackedDay(
    @Id
-   val id: String,
+   val id: String = ObjectId().toString(),
    val date: Date,
    val mode: DayMode,
    @Indexed

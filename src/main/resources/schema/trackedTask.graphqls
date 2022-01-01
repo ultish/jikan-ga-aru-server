@@ -1,0 +1,25 @@
+extend type Query {
+    trackedTasks(trackedDayId: ID): [TrackedTask!]
+}
+
+extend type Mutation {
+    createTrackedTask(
+        trackedDayId: ID!,
+        notes: String,
+    ): TrackedTask!
+    updateTrackedTask(
+        id: ID!,
+        notes: String,
+        chargeCodeIds: [ID!]
+    ): TrackedTask!
+    deleteTrackedTask(id: ID): Boolean
+}
+
+type TrackedTask {
+    id: ID!
+    notes: String
+
+    trackedDay: TrackedDay
+    chargeCodes: [ChargeCode!]
+    timeBlocks: [TimeBlock!]
+}

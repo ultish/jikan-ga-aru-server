@@ -1,10 +1,9 @@
-package com.ultish.jikangaaruserver.dataFetchers
+package com.ultish.jikangaaruserver.chargeCodes
 
 import com.netflix.graphql.dgs.DgsQueryExecutor
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
 import com.querydsl.core.BooleanBuilder
 import com.ultish.jikangaaruserver.entities.EChargeCode
-import com.ultish.jikangaaruserver.repositories.ChargeCodeRepository
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

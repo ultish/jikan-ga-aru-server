@@ -1,10 +1,9 @@
-package com.ultish.jikangaaruserver.dataFetchers
+package com.ultish.jikangaaruserver.users
 
 import com.netflix.graphql.dgs.DgsQueryExecutor
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
 import com.querydsl.core.BooleanBuilder
 import com.ultish.jikangaaruserver.entities.EUser
-import com.ultish.jikangaaruserver.repositories.UserRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,7 +32,10 @@ class UserDataFetcherTest {
       ).thenAnswer {
          listOf(
             EUser(
-               id = "1-2-3-4", username = "jxhui", password = "password", trackedDayIds = mutableListOf()
+               id = "1-2-3-4",
+               username = "jxhui",
+               password = "password",
+               trackedDayIds = listOf()
             )
          )
       }

@@ -28,24 +28,18 @@ type TimeCharge {
     value: Float!
 }
 
-# TODO question is do we store vertically or horizontally via TimeBlocks
-type TimeSlot {
-    id: ID!
-    # a day is broken up into 6min time slots. 0 = 00:00, 1 = 00:06, 2 = 00:12 etc
-    timeSlot: Int!
-    trackedTask: TrackedTask!
-    chargeCode: [ChargeCode]!
+## TODO question is do we store vertically or horizontally via TimeBlocks
+#type TimeSlot {
+#    id: ID!
+#    # a day is broken up into 6min time slots. 0 = 00:00, 1 = 00:06, 2 = 00:12 etc
+#    timeSlot: Int!
+#    trackedTask: TrackedTask!
+#    chargeCode: [ChargeCode]!
+#
+#    trackedDay: TrackedDay!
+#}
 
-    trackedDay: TrackedDay!
-}
 
-type TrackedTask {
-    id: ID!
-    notes: String
-    chargeCodes: [ChargeCode!]
-
-    timeBlocks: [TimeBlock!]
-}
 
 type TimeBlock {
     id: ID!

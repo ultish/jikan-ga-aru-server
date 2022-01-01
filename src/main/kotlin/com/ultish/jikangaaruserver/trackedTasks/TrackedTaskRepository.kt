@@ -1,4 +1,4 @@
-package com.ultish.jikangaaruserver.repositories
+package com.ultish.jikangaaruserver.trackedTasks
 
 import com.ultish.jikangaaruserver.entities.ETrackedTask
 import org.springframework.data.mongodb.repository.MongoRepository

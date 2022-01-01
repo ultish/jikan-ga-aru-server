@@ -2,6 +2,7 @@ package com.ultish.jikangaaruserver.entities
 
 import com.querydsl.core.annotations.QueryEntity
 import com.ultish.generated.types.ChargeCode
+import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -9,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @QueryEntity
 data class EChargeCode(
    @Id
-   val id: String,
+   val id: String = ObjectId().toString(),
    val name: String,
    val code: String,
    val description: String?,

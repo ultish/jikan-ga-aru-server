@@ -1,4 +1,4 @@
-package com.ultish.jikangaaruserver.dataFetchers
+package com.ultish.jikangaaruserver.trackedDays
 
 import com.netflix.graphql.dgs.*
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
@@ -7,11 +7,10 @@ import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.DayMode
 import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.User
-import com.ultish.jikangaaruserver.entities.ETrackedDay
-import com.ultish.jikangaaruserver.entities.QETrackedDay
-import com.ultish.jikangaaruserver.entities.QEUser
-import com.ultish.jikangaaruserver.repositories.TrackedDayRepository
-import com.ultish.jikangaaruserver.repositories.UserRepository
+import com.ultish.jikangaaruserver.dataFetchers.delete
+import com.ultish.jikangaaruserver.dataFetchers.fetchPaginated
+import com.ultish.jikangaaruserver.users.UserDataFetcher
+import com.ultish.jikangaaruserver.users.UserRepository
 import graphql.relay.Connection
 import graphql.schema.DataFetchingEnvironment
 import org.bson.types.ObjectId
@@ -54,29 +53,53 @@ class TrackedDayDataFetcher {
 
    @DgsMutation
    fun createTrackedDay(
-      @InputArgument username: String,
+      @InputArgument userId: String,
       @InputArgument date: Double, // not confusing at all, graphql's Float is passed in as a Double
       @InputArgument mode: DayMode?,
    ): TrackedDay {
-      val user = userRepository.findOne(QEUser.eUser.username.eq(username))
-      if (user.isEmpty) {
-         throw DgsInvalidInputArgumentException(
-            message = "Couldn't find user ${username}"
-         )
+      if (!userRepository.existsById(userId)) {
+         throw DgsInvalidInputArgumentException("Couldn't find User[${userId}]")
       }
-      val userEntity = user.get()
-      val trackedDay = repository.save(ETrackedDay(
+
+      // make sure we can't re-create a TrackedDay for a user with an existing date
+      if (repository.exists(BooleanBuilder()
+            .and(QETrackedDay.eTrackedDay.userId.eq(userId))
+            .and(QETrackedDay.eTrackedDay.date.eq(Date(date.toLong()))))
+      ) {
+         throw DgsInvalidInputArgumentException("Date[${Date(date.toLong())} already exists")
+      }
+
+      return repository.save(ETrackedDay(
          id = ObjectId().toString(),
          date = Date(date.toLong()),
          mode = mode ?: DayMode.NORMAL,
-         userId = userEntity.id,
-      ))
+         userId = userId,
+      )).toGqlType()
+   }
 
-      // make sure to update the back-reference
-      userEntity.trackedDayIds.add(trackedDay.id)
-      userRepository.save(userEntity)
+   @DgsMutation
+   fun deleteTrackedDay(@InputArgument id: String): Boolean {
+      return delete(repository, QETrackedDay.eTrackedDay.id, id)
+   }
 
-      return trackedDay.toGqlType()
+   @DgsMutation
+   fun updateTrackedDay(
+      @InputArgument id: String,
+      @InputArgument mode: DayMode?,
+      @InputArgument date: Double?,
+   ): TrackedDay {
+      val record = repository.findById(id)
+         .map { it }
+         .orElseThrow {
+            DgsInvalidInputArgumentException("Couldn't find TrackedDay[${id}]")
+         }
+
+      val copy = record.copy(
+         mode = mode ?: record.mode,
+         date = if (date != null) Date(date.toLong()) else record.date
+      )
+
+      return repository.save(copy).toGqlType()
    }
 
    //
@@ -98,11 +121,10 @@ class TrackedDayDataFetcher {
    // Data Loaders
    // -------------------------------------------------------------------------
    @DgsDataLoader(name = DATA_LOADER_FOR_USERS, caching = true)
-   val trackedDayBatchLoader = MappedBatchLoader<String, List<TrackedDay>> {
+   val trackedDaysBatchLoader = MappedBatchLoader<String, List<TrackedDay>> {
       CompletableFuture.supplyAsync {
-         repository.findAll(BooleanBuilder(QETrackedDay.eTrackedDay.userId.`in`(it)))
+         repository.findAll(QETrackedDay.eTrackedDay.userId.`in`(it))
             .groupBy({ it.userId }, { it.toGqlType() })
       }
    }
-
 }

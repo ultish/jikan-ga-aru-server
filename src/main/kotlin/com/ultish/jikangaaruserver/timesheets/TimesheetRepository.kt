@@ -1,4 +1,4 @@
-package com.ultish.jikangaaruserver.repositories
+package com.ultish.jikangaaruserver.timesheets
 
 import com.ultish.jikangaaruserver.entities.ETimesheet
 import org.springframework.data.mongodb.repository.MongoRepository

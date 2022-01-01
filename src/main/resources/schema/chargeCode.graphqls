@@ -4,7 +4,8 @@ extend type Query {
 
 extend type Mutation {
     createChargeCode(name: String!, code: String!, description: String, expired: Boolean=false): ChargeCode
-    deleteChargeCode(code: String!): Boolean
+    updateChargeCode(id: ID!, name: String, code: String, description: String, expired: Boolean): ChargeCode
+    deleteChargeCode(id: ID!): Boolean
 }
 
 type ChargeCode {

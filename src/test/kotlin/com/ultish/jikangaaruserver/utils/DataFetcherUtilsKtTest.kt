@@ -1,5 +1,6 @@
-package com.ultish.jikangaaruserver.dataFetchers
+package com.ultish.jikangaaruserver.utils
 
+import com.ultish.jikangaaruserver.dataFetchers.createPageable
 import org.junit.jupiter.api.Test
 import java.util.*
 

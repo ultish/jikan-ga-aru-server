@@ -1,4 +1,4 @@
-package com.ultish.jikangaaruserver.repositories
+package com.ultish.jikangaaruserver.timeBlocks
 
 import com.ultish.jikangaaruserver.entities.ETimeBlock
 import org.springframework.data.mongodb.repository.MongoRepository

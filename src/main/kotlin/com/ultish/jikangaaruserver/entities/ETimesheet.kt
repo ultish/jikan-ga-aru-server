@@ -2,6 +2,8 @@ package com.ultish.jikangaaruserver.entities
 
 import com.querydsl.core.annotations.QueryEntity
 import com.ultish.generated.types.Timesheet
+import com.ultish.jikangaaruserver.trackedDays.ETrackedDay
+import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.util.*
@@ -10,7 +12,7 @@ import java.util.*
 @QueryEntity
 data class ETimesheet(
    @Id
-   val id: String,
+   val id: String = ObjectId().toString(),
    val weekEndingDate: Date,
    val EUser: EUser,
    val ETimeCharged: List<ETimeCharge>,

@@ -1,4 +1,4 @@
-package com.ultish.jikangaaruserver.repositories
+package com.ultish.jikangaaruserver.timeCharges
 
 import com.ultish.jikangaaruserver.entities.ETimeCharge
 import org.springframework.data.mongodb.repository.MongoRepository

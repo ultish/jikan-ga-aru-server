@@ -1,4 +1,4 @@
-package com.ultish.jikangaaruserver.repositories
+package com.ultish.jikangaaruserver.chargeCodes
 
 import com.ultish.jikangaaruserver.entities.EChargeCode
 import org.springframework.data.mongodb.repository.MongoRepository

@@ -1,6 +1,5 @@
 package com.ultish.jikangaaruserver.dataFetchers
 
-import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.Predicate
 import com.querydsl.core.types.dsl.StringPath
 import com.ultish.jikangaaruserver.entities.GraphQLEntity
@@ -107,7 +106,7 @@ fun <G, E : GraphQLEntity<G>, R> future(repository: R, predicate: Predicate)
    where R : QuerydslPredicateExecutor<E>,
          R : MongoRepository<E, String> {
    return CompletableFuture.supplyAsync {
-      repository.findAll(BooleanBuilder(predicate))
+      repository.findAll(predicate)
          .map {
             it.toGqlType()
          }
