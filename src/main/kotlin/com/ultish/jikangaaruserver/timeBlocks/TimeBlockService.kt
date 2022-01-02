@@ -5,7 +5,7 @@ import com.ultish.jikangaaruserver.entities.QETimeBlock
 import org.springframework.beans.factory.annotation.Autowired
 
 @DgsComponent
-class TimeBlockDataFetcher {
+class TimeBlockService {
 
    @Autowired
    lateinit var repository: TimeBlockRepository

@@ -9,7 +9,7 @@ extend type Query  {
 extend type Mutation {
     createTrackedDay(userId: ID!, date: Float!, mode: DayMode): TrackedDay
     deleteTrackedDay(id: ID!): Boolean
-    updateTrackedDay(id: ID!, mode: DayMode, date: Float): TrackedDay
+    updateTrackedDay(id: ID!, mode: DayMode, date: Float, trackedTaskIds: [String!]): TrackedDay
 }
 
 # each tracked day will have a max of 240 timeslots (if you work 24hrs!)
@@ -19,7 +19,7 @@ type TrackedDay {
     mode: DayMode!
 
     user: User
-    tasks: [TrackedTask!]
+    trackedTasks: [TrackedTask!]
     timeCharges: [TimeCharge!]
 }
 

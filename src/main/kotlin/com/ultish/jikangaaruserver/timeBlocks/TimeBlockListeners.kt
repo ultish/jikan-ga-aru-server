@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 @Component
 class TimeBlockTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>() {
    @Autowired
-   lateinit var timeBlockDataFetcher: TimeBlockDataFetcher
+   lateinit var timeBlockService: TimeBlockService
 
    override fun onAfterSave(event: AfterSaveEvent<ETrackedTask>) {
 
@@ -19,7 +19,7 @@ class TimeBlockTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>() 
 
    override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
       getIdFrom(event)?.let { id ->
-         timeBlockDataFetcher.trackedTaskDeleted(id)
+         timeBlockService.trackedTaskDeleted(id)
       }
    }
 }

@@ -15,9 +15,9 @@ import org.springframework.boot.test.mock.mockito.MockBean
 
 @SpringBootTest(
    classes = [DgsAutoConfiguration::class,
-      ChargeCodeDataFetcher::class]
+      ChargeCodeService::class]
 )
-class ChargeCodeDataFetcherTest {
+class ChargeCodeServiceTest {
 
    @Autowired
    lateinit var dgsQueryExecutor: DgsQueryExecutor

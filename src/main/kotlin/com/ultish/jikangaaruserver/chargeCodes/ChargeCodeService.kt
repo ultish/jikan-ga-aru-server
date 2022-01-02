@@ -10,11 +10,10 @@ import com.ultish.generated.types.ChargeCode
 import com.ultish.jikangaaruserver.dataFetchers.delete
 import com.ultish.jikangaaruserver.entities.EChargeCode
 import com.ultish.jikangaaruserver.entities.QEChargeCode
-import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 
 @DgsComponent
-class ChargeCodeDataFetcher {
+class ChargeCodeService {
 
    @Autowired
    lateinit var repository: ChargeCodeRepository
@@ -53,7 +52,6 @@ class ChargeCodeDataFetcher {
       @InputArgument expired: Boolean = false,
    ): ChargeCode {
       return repository.save(EChargeCode(
-         id = ObjectId().toString(),
          name = name,
          code = code,
          description = description,

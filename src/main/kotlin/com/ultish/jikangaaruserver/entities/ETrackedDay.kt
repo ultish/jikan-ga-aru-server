@@ -1,9 +1,8 @@
-package com.ultish.jikangaaruserver.trackedDays
+package com.ultish.jikangaaruserver.entities
 
 import com.querydsl.core.annotations.QueryEntity
 import com.ultish.generated.types.DayMode
 import com.ultish.generated.types.TrackedDay
-import com.ultish.jikangaaruserver.entities.GraphQLEntity
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
@@ -21,8 +20,10 @@ data class ETrackedDay(
    val userId: String,
 //   @DocumentReference(lazy = true)
 //   val user: EUser,
-//   @DocumentReference
+//   @DocumentReference()
 //   var tasks: List<ETrackedTask> = listOf(),
+   @Indexed
+   val trackedTaskIds: List<String> = listOf(),
 ) : GraphQLEntity<TrackedDay> {
    override fun toGqlType(): TrackedDay =
       TrackedDay(id,
