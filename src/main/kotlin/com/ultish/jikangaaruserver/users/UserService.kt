@@ -27,7 +27,8 @@ class UserService {
    @Autowired
    lateinit var repository: UserRepository
 
-   @Autowired
+   @Autowired()
+//   @Qualifier("TrackedDayRepository")
    lateinit var trackedDayRepository: TrackedDayRepository
 
    @DgsQuery

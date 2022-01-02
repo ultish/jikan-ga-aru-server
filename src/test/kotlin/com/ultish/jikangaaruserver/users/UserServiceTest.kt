@@ -4,6 +4,7 @@ import com.netflix.graphql.dgs.DgsQueryExecutor
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
 import com.querydsl.core.BooleanBuilder
 import com.ultish.jikangaaruserver.entities.EUser
+import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -24,6 +25,9 @@ class UserServiceTest {
 
    @MockBean
    lateinit var repository: UserRepository
+
+   @MockBean
+   lateinit var trackedDayRepository: TrackedDayRepository
 
    @BeforeEach
    fun before() {

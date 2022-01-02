@@ -3,3 +3,8 @@ spring:
     mongodb:
       host: 127.0.0.1
       auto-index-creation: true
+
+logging:
+  level:
+    org:
+      springframework: DEBUG
