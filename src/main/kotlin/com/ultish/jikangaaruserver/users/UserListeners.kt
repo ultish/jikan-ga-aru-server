@@ -29,7 +29,7 @@ class UserTrackedDayListener : AbstractMongoEventListener<ETrackedDay>() {
          userDataFetcher.repository.findAll(QEUser.eUser.trackedDayIds.contains(trackedDayId))
             .forEach { user ->
                userDataFetcher.updateUser(user,
-                  user.trackedDayIds - listOf(trackedDayId))
+                  user.trackedDayIds - listOf(trackedDayId).toSet())
             }
       }
    }
