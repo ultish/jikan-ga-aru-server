@@ -8,18 +8,19 @@ import com.ultish.generated.types.DayMode
 import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.TrackedTask
 import com.ultish.generated.types.User
+import com.ultish.jikangaaruserver.dataFetchers.DGS_CONTEXT_DATA
 import com.ultish.jikangaaruserver.dataFetchers.delete
 import com.ultish.jikangaaruserver.dataFetchers.fetchPaginated
 import com.ultish.jikangaaruserver.entities.ETrackedDay
 import com.ultish.jikangaaruserver.entities.QETrackedDay
 import com.ultish.jikangaaruserver.entities.QETrackedTask
-import com.ultish.jikangaaruserver.entities.QEUser
 import com.ultish.jikangaaruserver.trackedTasks.TrackedTaskRepository
 import com.ultish.jikangaaruserver.users.UserRepository
 import graphql.relay.Connection
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.DataLoader
 import org.dataloader.MappedBatchLoader
+import org.dataloader.MappedBatchLoaderWithContext
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -42,17 +43,23 @@ class TrackedDayService {
    lateinit var userRepository: UserRepository
 
    @DgsQuery
-   fun trackedDays(): List<TrackedDay> {
+   fun trackedDays(dfe: DataFetchingEnvironment): List<TrackedDay> {
       val trackedDays = repository.findAll()
+
+      // push the trackedDay entities into the graphql context
+      dfe.graphQlContext.put(DGS_CONTEXT_DATA, trackedDays)
+
       return trackedDays.map { it.toGqlType() }
    }
 
    @DgsQuery
    fun trackedDaysPaginated(
+      dfe: DataFetchingEnvironment,
       @InputArgument after: String?,
       @InputArgument first: Int?,
    ): Connection<TrackedDay> {
       return fetchPaginated(
+         dfe,
          repository,
          QETrackedDay.eTrackedDay.date.toString(),
          after,
@@ -132,7 +139,9 @@ class TrackedDayService {
    fun relatedUsers(dfe: DataFetchingEnvironment): CompletableFuture<User> {
       val dataLoader: DataLoader<String, User> = dfe.getDataLoader(DATA_LOADER_FOR_USERS)
       val trackedDay = dfe.getSource<TrackedDay>()
-      return dataLoader.load(trackedDay.id)
+      // we can fetch data from the graphQLContext that may be stored
+      val contextData = dfe.graphQlContext.get<List<ETrackedDay>>(DGS_CONTEXT_DATA)
+      return dataLoader.load(trackedDay.id, contextData?.find { it.id == trackedDay.id })
    }
 
    @DgsData(parentType = DgsConstants.TRACKEDDAY.TYPE_NAME, field = DgsConstants.TRACKEDDAY.TrackedTasks)
@@ -158,33 +167,47 @@ class TrackedDayService {
     * MappedBatchLoader as not every user may have a tracked day
     */
    @DgsDataLoader(name = DATA_LOADER_FOR_USERS, caching = true)
-   val userBatchLoader = MappedBatchLoader<String, User> { trackedDayIds ->
+   val userBatchLoader = MappedBatchLoaderWithContext<String, User?> { trackedDayIds, context ->
       CompletableFuture.supplyAsync {
-         val usersForTrackedDays = userRepository.findAll(QEUser.eUser.trackedDayIds.any().`in`(trackedDayIds))
-         val associateBy: Map<String, User?> = trackedDayIds.associateBy(
-            { it },
-            { trackedDayId ->
-               usersForTrackedDays.find { user -> user.trackedDayIds.contains(trackedDayId) }?.toGqlType()
-            },
-         )
+
+         // In order to minimize database load we can use the GraphQL Context to store data that was loaded already.
+         // That way we get access to the Entity object (which has the userId in this instance) and we can perform a
+         // easy lookup of Users by ID, instead of looping through a user's trackedDayIds
+         val trackedDayToUserIdMap = context.keyContexts.entries.associate { e ->
+            val userId = (e.value as? ETrackedDay)?.userId
+            Pair(e.key.toString(), userId)
+         }
+         val userMap = userRepository.findAllById(trackedDayToUserIdMap.values.filterNotNull())
+            .associateBy({ it.id }, { it })
+
+         val result = trackedDayToUserIdMap.keys.associateWith { trackedDayId ->
+            val user = trackedDayToUserIdMap[trackedDayId]?.let { userMap[it] }
+            user?.toGqlType()
+         }
+
+//         val usersForTrackedDays = userRepository.findAll(QEUser.eUser.trackedDayIds.any().`in`(trackedDayIds))
+//         val associateBy: Map<String, User?> = trackedDayIds.associateBy(
+//            { it },
+//            { trackedDayId ->
+//               usersForTrackedDays.find { user -> user.trackedDayIds.contains(trackedDayId) }?.toGqlType()
+//            },
+//         )
 
          // LEARN: @ is a label marker and @supplyAsync is an implicit label that has the same
          //  name as the function to which the lambda is passed. We can omit the return statement
          //  altogether as well and simply have 'assocateBy', or go further and remove the
          //  associateBy val
-         return@supplyAsync associateBy
+         return@supplyAsync result
       }
    }
 
    @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_TASKS, caching = true)
    val loadForTrackedDayBatchLoader = MappedBatchLoader<String, List<TrackedTask>> { trackedDayIds ->
       CompletableFuture.supplyAsync {
-         val result: Map<String, List<TrackedTask>> = trackedTaskRepository
+         trackedTaskRepository
             .findAll(QETrackedTask.eTrackedTask.trackedDayId
                .`in`(trackedDayIds))
             .groupBy({ it.trackedDayId }, { it.toGqlType() })
-
-         result
       }
    }
 

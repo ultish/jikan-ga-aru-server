@@ -3,12 +3,15 @@ package com.ultish.jikangaaruserver.trackedTasks
 import com.netflix.graphql.dgs.*
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.ultish.generated.DgsConstants
+import com.ultish.generated.types.TimeBlock
 import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.TrackedTask
 import com.ultish.jikangaaruserver.dataFetchers.delete
 import com.ultish.jikangaaruserver.entities.ETrackedTask
+import com.ultish.jikangaaruserver.entities.QETimeBlock
 import com.ultish.jikangaaruserver.entities.QETrackedDay
 import com.ultish.jikangaaruserver.entities.QETrackedTask
+import com.ultish.jikangaaruserver.timeBlocks.TimeBlockRepository
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.DataLoader
@@ -20,6 +23,7 @@ import java.util.concurrent.CompletableFuture
 class TrackedTaskService {
    private companion object {
       const val DATA_LOADER_FOR_TRACKED_DAY = "trackedDayForTrackedTask"
+      const val DATA_LOADER_FOR_TIME_BLOCKS = "timeBlocksForTrackedTask"
    }
 
    @Autowired
@@ -27,6 +31,9 @@ class TrackedTaskService {
 
    @Autowired
    lateinit var trackedDayRepository: TrackedDayRepository
+
+   @Autowired
+   lateinit var timeBlockRepository: TimeBlockRepository
 
    @DgsQuery
    fun trackedTasks(
@@ -78,10 +85,6 @@ class TrackedTaskService {
    @DgsMutation
    fun deleteTrackedTask(@InputArgument id: String): Boolean {
       return delete(repository, QETrackedTask.eTrackedTask.id, id)
-
-      // delete time blocks
-      // remove from trackedDay
-
    }
 
    //
@@ -90,8 +93,15 @@ class TrackedTaskService {
    @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME, field = DgsConstants.TRACKEDTASK.TrackedDay)
    fun relatedUsers(dfe: DataFetchingEnvironment): CompletableFuture<TrackedDay> {
       val dataLoader: DataLoader<String, TrackedDay> = dfe.getDataLoader(DATA_LOADER_FOR_TRACKED_DAY)
-      val trackedDay = dfe.getSource<TrackedDay>()
-      return dataLoader.load(trackedDay.id)
+      val trackedTask = dfe.getSource<TrackedTask>()
+      return dataLoader.load(trackedTask.id)
+   }
+
+   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME, field = DgsConstants.TRACKEDTASK.TimeBlocks)
+   fun relatedTimeBlocks(dfe: DataFetchingEnvironment): CompletableFuture<List<TimeBlock>> {
+      val dataLoader = dfe.getDataLoader<String, List<TimeBlock>>(DATA_LOADER_FOR_TIME_BLOCKS)
+      val trackedTask = dfe.getSource<TrackedTask>()
+      return dataLoader.load(trackedTask.id)
    }
 
    //
@@ -107,6 +117,14 @@ class TrackedTaskService {
             { trackedTaskId ->
                trackedDays.find { td -> td.trackedTaskIds.contains(trackedTaskId) }?.toGqlType()
             })
+      }
+   }
+
+   @DgsDataLoader(name = DATA_LOADER_FOR_TIME_BLOCKS, caching = true)
+   val loadForTimeBlocks = MappedBatchLoader<String, List<TimeBlock>> { trackedTaskIDs ->
+      CompletableFuture.supplyAsync {
+         timeBlockRepository.findAll(QETimeBlock.eTimeBlock.trackedTaskId.`in`(trackedTaskIDs))
+            .groupBy({ it.trackedTaskId }, { it.toGqlType() })
       }
    }
 }

@@ -41,13 +41,6 @@ type TimeCharge {
 
 
 
-type TimeBlock {
-    id: ID!
-    # a day is broken up into 6min time slots. 0 = 00:00, 1 = 00:06, 2 = 00:12 etc
-    timeSlot: Int!
-}
-
-
 type Query {
     # define any generic queries here
 }

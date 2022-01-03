@@ -4,6 +4,7 @@ import com.querydsl.core.types.Predicate
 import com.querydsl.core.types.dsl.StringPath
 import com.ultish.jikangaaruserver.entities.GraphQLEntity
 import graphql.relay.*
+import graphql.schema.DataFetchingEnvironment
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -13,6 +14,8 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+
+const val DGS_CONTEXT_DATA = "dgsContextData"
 
 /**
  * Utility to delete an Entity via a String-based key. (eg id, name etc).
@@ -59,6 +62,7 @@ fun createCursor(index: Int, pageNumber: Int, size: Int): String {
  * consistently
  */
 fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
+   dfe: DataFetchingEnvironment,
    repository: R,
    sortKey: String,
    after: String? = null,
@@ -70,11 +74,15 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, after, first)
    val page = repository.findAll(pagable)
 
+   // load the entity data into the DGS context for later use if necessary (eg dataLoaders)
+   dfe.graphQlContext.put(DGS_CONTEXT_DATA, page.content)
+
    val edges = page.mapIndexed { index, it ->
       val gqlType = it.toGqlType()
       val cursor = createCursor(index, pageNumber, itemsPerPage)
       DefaultEdge(gqlType, DefaultConnectionCursor(cursor))
    }
+
    val pageInfo = DefaultPageInfo(
       edges.first().cursor,
       edges.last().cursor,
