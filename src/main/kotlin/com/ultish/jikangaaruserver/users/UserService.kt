@@ -1,19 +1,22 @@
 package com.ultish.jikangaaruserver.users
 
 import com.netflix.graphql.dgs.*
+import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.User
+import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.delete
+import com.ultish.jikangaaruserver.dataFetchers.dgsData
+import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
 import com.ultish.jikangaaruserver.entities.EUser
 import com.ultish.jikangaaruserver.entities.QETrackedDay
 import com.ultish.jikangaaruserver.entities.QEUser
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import graphql.schema.DataFetchingEnvironment
-import org.dataloader.DataLoader
-import org.dataloader.MappedBatchLoader
+import org.dataloader.MappedBatchLoaderWithContext
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.CompletableFuture
 
@@ -33,15 +36,17 @@ class UserService {
 
    @DgsQuery
    fun users(
+      dfe: DataFetchingEnvironment,
       @InputArgument username: String?,
    ): List<User> {
-      val builder = BooleanBuilder()
+      return dgsQuery(dfe) {
+         val builder = BooleanBuilder()
 
-      username?.let {
-         builder.and(QEUser.eUser.username.equalsIgnoreCase(it))
+         username?.let {
+            builder.and(QEUser.eUser.username.equalsIgnoreCase(it))
+         }
+         repository.findAll(builder)
       }
-
-      return repository.findAll(builder).map { it.toGqlType() }
    }
 
    @DgsMutation
@@ -88,20 +93,28 @@ class UserService {
    // -------------------------------------------------------------------------
    @DgsData(parentType = DgsConstants.USER.TYPE_NAME, field = DgsConstants.USER.TrackedDays)
    fun trackedDaysForUser(dfe: DataFetchingEnvironment): CompletableFuture<List<TrackedDay>> {
-      val dataLoader: DataLoader<String, List<TrackedDay>> =
-         dfe.getDataLoader(DATA_LOADER_FOR_TRACKED_DAYS)
-      val user = dfe.getSource<User>()
-      return dataLoader.load(user.id)
+      return dgsData<List<TrackedDay>, User>(dfe, DATA_LOADER_FOR_TRACKED_DAYS) {
+         it.id
+      }
+//      val dataLoader: DataLoader<String, List<TrackedDay>> =
+//         dfe.getDataLoader(DATA_LOADER_FOR_TRACKED_DAYS)
+//      val user = dfe.getSource<User>()
+//      return dataLoader.load(user.id)
    }
 
    //
    // Data Loaders
    // -------------------------------------------------------------------------
    @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_DAYS, caching = true)
-   val trackedDaysBatchLoader = MappedBatchLoader<String, List<TrackedDay>> {
+   val trackedDaysBatchLoader = MappedBatchLoaderWithContext<String, List<TrackedDay>> { userIds, env ->
       CompletableFuture.supplyAsync {
-         trackedDayRepository.findAll(QETrackedDay.eTrackedDay.userId.`in`(it))
-            .groupBy({ it.userId }, { it.toGqlType() })
+
+         val customContext = DgsContext.getCustomContext<CustomContext>(env)
+
+         val trackedDays = trackedDayRepository.findAll(QETrackedDay.eTrackedDay.userId.`in`(userIds))
+         customContext.entities.addAll(trackedDays)
+         
+         trackedDays.groupBy({ it.userId }, { it.toGqlType() })
       }
    }
 }

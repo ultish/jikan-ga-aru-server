@@ -8,8 +8,10 @@ import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.types.TimeBlock
 import com.ultish.jikangaaruserver.dataFetchers.delete
+import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
 import com.ultish.jikangaaruserver.entities.ETimeBlock
 import com.ultish.jikangaaruserver.entities.QETimeBlock
+import graphql.schema.DataFetchingEnvironment
 import org.springframework.beans.factory.annotation.Autowired
 
 @DgsComponent
@@ -20,17 +22,20 @@ class TimeBlockService {
 
    @DgsQuery
    fun timeBlocks(
+      dfe: DataFetchingEnvironment,
       @InputArgument ids: List<String>? = null,
       @InputArgument trackedTaskId: String? = null,
    ): List<TimeBlock> {
-      val builder = BooleanBuilder()
-      ids?.let {
-         builder.and(QETimeBlock.eTimeBlock.id.`in`(it))
+      return dgsQuery(dfe) {
+         val builder = BooleanBuilder()
+         ids?.let {
+            builder.and(QETimeBlock.eTimeBlock.id.`in`(it))
+         }
+         trackedTaskId?.let {
+            builder.and(QETimeBlock.eTimeBlock.trackedTaskId.eq(it))
+         }
+         repository.findAll(builder)
       }
-      trackedTaskId?.let {
-         builder.and(QETimeBlock.eTimeBlock.trackedTaskId.eq(it))
-      }
-      return repository.findAll(builder).map { it.toGqlType() }
    }
 
    @DgsMutation
@@ -55,18 +60,6 @@ class TimeBlockService {
       @InputArgument id: String,
    ): Boolean {
       return delete(repository, QETimeBlock.eTimeBlock.id, id)
-   }
-
-   fun trackedTaskDeleted(trackedTaskId: String) {
-      val toDelete = repository.findAll(QETimeBlock.eTimeBlock.trackedTaskId.eq(trackedTaskId))
-
-      println("${trackedTaskId} deleted, deleting ${toDelete.count()} TimeBlocks")
-
-      // TODO would need a subscription event
-
-      // TODO would need to re-calculate timeCharge and timeSheet
-
-      repository.deleteAll(toDelete)
    }
 
 }

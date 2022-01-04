@@ -8,8 +8,10 @@ import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.types.ChargeCode
 import com.ultish.jikangaaruserver.dataFetchers.delete
+import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
 import com.ultish.jikangaaruserver.entities.EChargeCode
 import com.ultish.jikangaaruserver.entities.QEChargeCode
+import graphql.schema.DataFetchingEnvironment
 import org.springframework.beans.factory.annotation.Autowired
 
 @DgsComponent
@@ -20,28 +22,30 @@ class ChargeCodeService {
 
    @DgsQuery
    fun chargeCodes(
+      dfe: DataFetchingEnvironment,
       @InputArgument ids: List<String>?,
       @InputArgument name: String?,
       @InputArgument code: String?,
       @InputArgument description: String?,
       @InputArgument expired: Boolean?,
    ): List<ChargeCode> {
-      val builder = BooleanBuilder()
+      return dgsQuery(dfe) {
+         val builder = BooleanBuilder()
 
-      ids?.let {
-         builder.and(QEChargeCode.eChargeCode.id.`in`(it))
+         ids?.let {
+            builder.and(QEChargeCode.eChargeCode.id.`in`(it))
+         }
+         code?.let {
+            builder.and(QEChargeCode.eChargeCode.code.equalsIgnoreCase(it))
+         }
+         description?.let {
+            builder.and(QEChargeCode.eChargeCode.description.containsIgnoreCase(it))
+         }
+         expired?.let {
+            builder.and(QEChargeCode.eChargeCode.expired.eq(it))
+         }
+         repository.findAll(builder)
       }
-      code?.let {
-         builder.and(QEChargeCode.eChargeCode.code.equalsIgnoreCase(it))
-      }
-      description?.let {
-         builder.and(QEChargeCode.eChargeCode.description.containsIgnoreCase(it))
-      }
-      expired?.let {
-         builder.and(QEChargeCode.eChargeCode.expired.eq(it))
-      }
-
-      return repository.findAll(builder).map { it.toGqlType() }
    }
 
    @DgsMutation

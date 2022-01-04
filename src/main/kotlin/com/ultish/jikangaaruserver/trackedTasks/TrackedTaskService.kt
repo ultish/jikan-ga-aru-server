@@ -1,21 +1,24 @@
 package com.ultish.jikangaaruserver.trackedTasks
 
 import com.netflix.graphql.dgs.*
+import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
+import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.TimeBlock
 import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.TrackedTask
+import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.delete
+import com.ultish.jikangaaruserver.dataFetchers.dgsData
+import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
 import com.ultish.jikangaaruserver.entities.ETrackedTask
 import com.ultish.jikangaaruserver.entities.QETimeBlock
-import com.ultish.jikangaaruserver.entities.QETrackedDay
 import com.ultish.jikangaaruserver.entities.QETrackedTask
 import com.ultish.jikangaaruserver.timeBlocks.TimeBlockRepository
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import graphql.schema.DataFetchingEnvironment
-import org.dataloader.DataLoader
-import org.dataloader.MappedBatchLoader
+import org.dataloader.MappedBatchLoaderWithContext
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.concurrent.CompletableFuture
 
@@ -37,11 +40,26 @@ class TrackedTaskService {
 
    @DgsQuery
    fun trackedTasks(
-      @InputArgument trackedDayId: String,
+      dfe: DataFetchingEnvironment,
+      @InputArgument trackedDayId: String?,
    ): List<TrackedTask> {
 
-      return repository.findAll(QETrackedTask.eTrackedTask.trackedDayId.eq(trackedDayId))
-         .map { it.toGqlType() }
+      return dgsQuery(dfe) {
+         val builder = BooleanBuilder()
+         trackedDayId?.let {
+            builder.and(QETrackedTask.eTrackedTask.trackedDayId.eq(
+               trackedDayId))
+         }
+         repository.findAll(builder)
+      }
+
+//      val trackedTasks = repository.findAll(QETrackedTask.eTrackedTask.trackedDayId.eq(
+//         trackedDayId))
+//
+//      // push the entities into the graphql context
+//      dfe.graphQlContext.put(DGS_CONTEXT_DATA, trackedTasks)
+//
+//      return trackedTasks.map { it.toGqlType() }
    }
 
    @DgsMutation
@@ -90,42 +108,82 @@ class TrackedTaskService {
    //
    // Document References (relationships)
    // -------------------------------------------------------------------------
-   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME, field = DgsConstants.TRACKEDTASK.TrackedDay)
+   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
+      field = DgsConstants.TRACKEDTASK.TrackedDay)
    fun relatedUsers(dfe: DataFetchingEnvironment): CompletableFuture<TrackedDay> {
-      val dataLoader: DataLoader<String, TrackedDay> = dfe.getDataLoader(DATA_LOADER_FOR_TRACKED_DAY)
-      val trackedTask = dfe.getSource<TrackedTask>()
-      return dataLoader.load(trackedTask.id)
+//      return dgsData<TrackedDay, TrackedTask, ETrackedTask>(dfe,
+//         DATA_LOADER_FOR_TRACKED_DAY) { trackedTask ->
+//         trackedTask.id
+//      }
+
+//      val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
+//
+//      val dataLoader: DataLoader<String, TrackedDay> = dfe.getDataLoader(DATA_LOADER_FOR_TRACKED_DAY)
+//      val trackedTask = dfe.getSource<TrackedTask>()
+//      return dataLoader.load(trackedTask.id, dfe.graphQlContext)
+//
+      return dgsData<TrackedDay, TrackedTask>(dfe, DATA_LOADER_FOR_TRACKED_DAY) {
+         it.id
+      }
    }
 
-   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME, field = DgsConstants.TRACKEDTASK.TimeBlocks)
+   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
+      field = DgsConstants.TRACKEDTASK.TimeBlocks)
    fun relatedTimeBlocks(dfe: DataFetchingEnvironment): CompletableFuture<List<TimeBlock>> {
-      val dataLoader = dfe.getDataLoader<String, List<TimeBlock>>(DATA_LOADER_FOR_TIME_BLOCKS)
-      val trackedTask = dfe.getSource<TrackedTask>()
-      return dataLoader.load(trackedTask.id)
+      return dgsData<List<TimeBlock>, TrackedTask>(dfe,
+         DATA_LOADER_FOR_TIME_BLOCKS) { trackedTask ->
+         trackedTask.id
+      }
    }
 
    //
    // Data Loaders
    // -------------------------------------------------------------------------
    @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_DAY, caching = true)
-   val loadForTrackedTaskBatchLoader = MappedBatchLoader<String, TrackedDay> { trackedTaskIds ->
+   val loadForTrackedTaskBatchLoader = MappedBatchLoaderWithContext<String, TrackedDay> { trackedTaskIds, environment ->
       CompletableFuture.supplyAsync {
-         val trackedDays = trackedDayRepository.findAll(QETrackedDay.eTrackedDay.trackedTaskIds.any().`in`
-            (trackedTaskIds))
+         // Relationship: Many-To-One
 
-         trackedTaskIds.associateBy({ it },
-            { trackedTaskId ->
-               trackedDays.find { td -> td.trackedTaskIds.contains(trackedTaskId) }?.toGqlType()
-            })
+         val customContext = DgsContext.getCustomContext<CustomContext>(environment)
+
+         val trackedTaskToTrackedDayMap = customContext.entities.mapNotNull {
+            if (it is ETrackedTask && trackedTaskIds.contains(it.id)) {
+               it
+            } else {
+               null
+            }
+         }.associateBy({ it.id }, { it.trackedDayId })
+
+         val trackedDayMap = trackedDayRepository.findAllById(
+            trackedTaskToTrackedDayMap.values.toList())
+            .associateBy { it.id }
+
+         // pass down to next level if needed
+         customContext.entities.addAll(trackedDayMap.values)
+
+         trackedTaskToTrackedDayMap.keys.associateWith { trackedTaskId ->
+            val trackedDay =
+               trackedTaskToTrackedDayMap[trackedTaskId]?.let { trackedDayMap[it] }
+            trackedDay?.toGqlType()
+         }
       }
    }
 
    @DgsDataLoader(name = DATA_LOADER_FOR_TIME_BLOCKS, caching = true)
-   val loadForTimeBlocks = MappedBatchLoader<String, List<TimeBlock>> { trackedTaskIDs ->
-      CompletableFuture.supplyAsync {
-         timeBlockRepository.findAll(QETimeBlock.eTimeBlock.trackedTaskId.`in`(trackedTaskIDs))
-            .groupBy({ it.trackedTaskId }, { it.toGqlType() })
+   val loadForTimeBlocks =
+      MappedBatchLoaderWithContext<String, List<TimeBlock>> { trackedTaskIDs, env ->
+         CompletableFuture.supplyAsync {
+            // Relationship: One-To-Many
+
+            val customContext = DgsContext.getCustomContext<CustomContext>(env)
+
+            val timeBlocks = timeBlockRepository.findAll(QETimeBlock.eTimeBlock.trackedTaskId.`in`(
+               trackedTaskIDs))
+
+            customContext.entities.addAll(timeBlocks)
+
+            timeBlocks.groupBy({ it.trackedTaskId }, { it.toGqlType() })
+         }
       }
-   }
 }
 
