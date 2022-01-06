@@ -118,14 +118,12 @@ fun <G, E : GraphQLEntity<G>> dgsQuery(
    dfe: DataFetchingEnvironment,
    entities: () -> Iterable<E>,
 ): List<G> {
-   val entities = entities()
-
+   val entitiesToAdd = entities()
    // push the entities into the graphql context
-//   dfe.graphQlContext.put(DGS_CONTEXT_DATA, entities)
    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
-   customContext.entities.addAll(entities)
+   customContext.entities.addAll(entitiesToAdd)
 
-   return entities.map { it.toGqlType() }
+   return entitiesToAdd.map { it.toGqlType() }
 }
 
 /**
@@ -148,13 +146,13 @@ fun <R, G/*, E : GraphQLEntity<G>*/> dgsData(
 /**
  * Helper function to pull out Map from DSG context
  */
-fun <V, E : GraphQLEntity<*>> contextToMap(
+inline fun <V, reified E : GraphQLEntity<*>> contextToMap(
    context: BatchLoaderEnvironment,
    getValue: (entity: E?) -> V?,
 ): Map<String, V?> {
    return context.keyContexts.entries.associate { entry ->
       // LEARN: as? is kotlin's safe-cast operator which returns null instead of ClassCastException
-      val value = getValue(entry.value as? E)
+      val value = if (entry.value is E) getValue(entry.value as E) else null
       Pair(entry.key.toString(), value)
    }
 }

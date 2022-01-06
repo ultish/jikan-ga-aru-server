@@ -1,8 +1,8 @@
 package com.ultish.jikangaaruserver.chargeCodes
 
 import com.netflix.graphql.dgs.DgsQueryExecutor
-import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
 import com.querydsl.core.BooleanBuilder
+import com.ultish.jikangaaruserver.JikanGaAruServerApplication
 import com.ultish.jikangaaruserver.entities.EChargeCode
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -14,7 +14,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
 
 @SpringBootTest(
-   classes = [DgsAutoConfiguration::class,
+   classes = [
+//      DgsAutoConfiguration::class,
+      JikanGaAruServerApplication::class,
       ChargeCodeService::class]
 )
 class ChargeCodeServiceTest {

@@ -181,10 +181,11 @@ class TrackedDayService {
             it.userId
          }
          val userMap = userRepository.findAllById(
-            trackedDayToUserIdMap.values.filterNotNull())
+            trackedDayToUserIdMap.values.toList())
             .associateBy { it.id }
 
-         // TODO make this common somehow
+         // TODO make this common somehow, probably by moving everything into the common supplier and have it return
+         //  Pair<Collection<E>, R>
          // pass down to next level if needed
          customContext.entities.addAll(userMap.values)
 
@@ -221,7 +222,6 @@ class TrackedDayService {
                )
 
             customContext.entities.addAll(trackedTasks)
-
 
             trackedTasks.groupBy({ it.trackedDayId }, { it.toGqlType() })
          }
