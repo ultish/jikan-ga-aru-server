@@ -158,6 +158,9 @@ class TrackedTaskService {
             trackedTaskToTrackedDayMap.values.toList())
             .associateBy { it.id }
 
+         // TODO not sure how these contexts are used in a federated graphQL scenario. I assume it probably wouldn't
+         //  and I'd have to re-implement the logic to fetch from DB for the related trackedDayIds here if this was
+         //  split into it's own microservice
          // pass down to next level if needed
          customContext.entities.addAll(trackedDayMap.values)
 
