@@ -118,6 +118,12 @@ fun <G, E : GraphQLEntity<G>> dgsQuery(
    dfe: DataFetchingEnvironment,
    entities: () -> Iterable<E>,
 ): List<G> {
+
+   // LEARN: can fetch request headers like this. Can use it to request the x-token for user auth
+   val request = DgsContext.getRequestData(dfe)
+   val userId = request?.headers?.getFirst("user-id")
+   println("request from ${userId}")
+
    val entitiesToAdd = entities()
    // push the entities into the graphql context
    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
