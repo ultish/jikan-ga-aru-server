@@ -132,6 +132,19 @@ fun <G, E : GraphQLEntity<G>> dgsQuery(
    return entitiesToAdd.map { it.toGqlType() }
 }
 
+fun <G, E : GraphQLEntity<G>> dgsMutate(dfe: DataFetchingEnvironment, entity: () -> E): G {
+   val request = DgsContext.getRequestData(dfe)
+   val userId = request?.headers?.getFirst("user-id")
+   println("create request from ${userId}")
+
+   val e = entity()
+
+   val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
+   customContext.entities.add(e)
+
+   return e.toGqlType()
+}
+
 /**
  * Helper function for @DgsData annotated document reference functions (functions that will use DgsDataLoaders)
  */

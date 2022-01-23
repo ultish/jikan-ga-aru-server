@@ -21,13 +21,6 @@ type Timesheet {
     trackedDays: [TrackedDay!]
 }
 
-type TimeCharge {
-    id: ID!
-    date: Float!
-    chargeCode: ChargeCode!
-    value: Float!
-}
-
 ## TODO question is do we store vertically or horizontally via TimeBlocks
 #type TimeSlot {
 #    id: ID!

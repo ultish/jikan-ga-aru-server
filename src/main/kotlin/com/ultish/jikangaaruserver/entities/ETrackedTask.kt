@@ -14,13 +14,12 @@ data class ETrackedTask(
    val id: String = ObjectId().toString(),
    val notes: String?,
    @Indexed
+   val timeSlots: List<Int> = listOf(),
+   @Indexed
    val trackedDayId: String,
    @Indexed
    val chargeCodeIds: List<String> = listOf(),
-   // TODO this may not be wise to add due to frequency of modifications
-//   @Indexed,
-//   val timeBlockIDs: List<String> = listOf(),
 ) : GraphQLEntity<TrackedTask> {
-   override fun toGqlType(): TrackedTask = TrackedTask(id, notes)
+   override fun toGqlType(): TrackedTask = TrackedTask(id, notes, timeSlots)
    override fun id(): String = id
 }

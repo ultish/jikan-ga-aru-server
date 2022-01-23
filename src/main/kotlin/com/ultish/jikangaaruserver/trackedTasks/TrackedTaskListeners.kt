@@ -22,3 +22,34 @@ class TrackedTaskTrackedDayListener : AbstractMongoEventListener<ETrackedDay>() 
       }
    }
 }
+
+//@Component
+//class TrackedTaskTimeBlockListener : AbstractMongoEventListener<ETimeBlock>() {
+//   @Autowired
+//   lateinit var trackedTaskService: TrackedTaskService
+//
+//   override fun onAfterSave(event: AfterSaveEvent<ETimeBlock>) {
+//      // when a timeblock is created, add to the timeBlockIds
+//      trackedTaskService.repository.findById(event.source.trackedTaskId).map {
+//         trackedTaskService.updateTrackedTask(
+//            trackedTask = it,
+//            timeBlockIds = it.timeBlockIds + listOf(getIdFrom(event))
+//         )
+//      }
+//   }
+//
+//   override fun onAfterDelete(event: AfterDeleteEvent<ETimeBlock>) {
+//      // when a timeblock is deleted, remove from timeBlockIDs
+//      getIdFrom(event)?.let { timeBlockId ->
+//         // TODO is there a faster way to do this instead of finding all TrackedTasks that use this TimeBlock?
+//         //  (There's only ever 1 Tracked Task)
+//         trackedTaskService.repository.findAll(QETrackedTask.eTrackedTask.timeBlockIds.contains(timeBlockId))
+//            .forEach { trackedTask ->
+//               trackedTaskService.updateTrackedTask(
+//                  trackedTask,
+//                  timeBlockIds = trackedTask.timeBlockIds - listOf(timeBlockId).toSet()
+//               )
+//            }
+//      }
+//   }
+//}

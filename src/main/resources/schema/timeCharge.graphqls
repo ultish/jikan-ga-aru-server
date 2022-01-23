@@ -1,0 +1,36 @@
+extend type Query {
+    timeCharges(timeSlot: Int, chargeCodeId: ID): [TimeCharge!]
+}
+
+extend type Mutation {
+    createTimeCharge(
+        timeSlot: Int!,
+        chargeCodeId: ID!,
+        trackedDayID: ID!,
+        chargeCodeAppearance: Int
+        totalChargeCodesForSlot: Int
+    ): TimeCharge!
+
+    updateTimeCharge(
+        id: ID!,
+        chargeCodeAppearance: Int,
+        totalChargeCodesForSlot: Int
+    ): TimeCharge!
+}
+
+type TimeCharge {
+    id: ID!
+    timeSlot: Int
+
+    """
+    The number of times this charge code appears at this timeslot
+    """
+    chargeCodeAppearance: Int
+    """
+    The number of chargecodes that appear across all tracked tasks at this timeslot
+    """
+    totalChargeCodesForSlot: Int
+
+    trackedDay: TrackedDay
+    chargeCode: ChargeCode
+}

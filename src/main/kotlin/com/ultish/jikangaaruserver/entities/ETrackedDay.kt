@@ -18,10 +18,6 @@ data class ETrackedDay(
    val mode: DayMode,
    @Indexed
    val userId: String,
-//   @DocumentReference(lazy = true)
-//   val user: EUser,
-//   @DocumentReference()
-//   var tasks: List<ETrackedTask> = listOf(),
    @Indexed
    val trackedTaskIds: List<String> = listOf(),
 ) : GraphQLEntity<TrackedDay> {
@@ -29,8 +25,6 @@ data class ETrackedDay(
       TrackedDay(id,
          date.time.toDouble(),
          mode
-//         EUser.toGqlType(),
-//         tasks.map { it.toGqlType() }
       )
 
    override fun id(): String = id

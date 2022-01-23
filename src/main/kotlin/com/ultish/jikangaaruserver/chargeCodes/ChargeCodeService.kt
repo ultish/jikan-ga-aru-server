@@ -8,6 +8,7 @@ import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.types.ChargeCode
 import com.ultish.jikangaaruserver.dataFetchers.delete
+import com.ultish.jikangaaruserver.dataFetchers.dgsMutate
 import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
 import com.ultish.jikangaaruserver.entities.EChargeCode
 import com.ultish.jikangaaruserver.entities.QEChargeCode
@@ -50,21 +51,25 @@ class ChargeCodeService {
 
    @DgsMutation
    fun createChargeCode(
+      dfe: DataFetchingEnvironment,
       @InputArgument name: String,
       @InputArgument code: String,
       @InputArgument description: String?,
       @InputArgument expired: Boolean = false,
    ): ChargeCode {
-      return repository.save(EChargeCode(
-         name = name,
-         code = code,
-         description = description,
-         expired = expired
-      )).toGqlType()
+      return dgsMutate(dfe) {
+         repository.save(EChargeCode(
+            name = name,
+            code = code,
+            description = description,
+            expired = expired
+         ))
+      }
    }
 
    @DgsMutation
    fun updateChargeCode(
+      dfe: DataFetchingEnvironment,
       @InputArgument id: String,
       @InputArgument name: String?,
       @InputArgument code: String?,
@@ -84,7 +89,9 @@ class ChargeCodeService {
          description = description ?: record.description,
          expired = expired ?: record.expired
       )
-      return repository.save(copy).toGqlType()
+      return dgsMutate(dfe) {
+         repository.save(copy)
+      }
    }
 
    @DgsMutation

@@ -63,6 +63,7 @@ class TrackedDayService {
 
    @DgsMutation
    fun createTrackedDay(
+      dfe: DataFetchingEnvironment,
       @InputArgument userId: String,
       @InputArgument date: Double, // not confusing at all, graphql's Float is passed in as a Double
       @InputArgument mode: DayMode?,
@@ -79,11 +80,13 @@ class TrackedDayService {
          throw DgsInvalidInputArgumentException("Date[${Date(date.toLong())} already exists")
       }
 
-      return repository.save(ETrackedDay(
-         date = Date(date.toLong()),
-         mode = mode ?: DayMode.NORMAL,
-         userId = userId,
-      )).toGqlType()
+      return dgsMutate(dfe) {
+         repository.save(ETrackedDay(
+            date = Date(date.toLong()),
+            mode = mode ?: DayMode.NORMAL,
+            userId = userId,
+         ))
+      }
    }
 
    @DgsMutation
@@ -93,6 +96,7 @@ class TrackedDayService {
 
    @DgsMutation
    fun updateTrackedDay(
+      dfe: DataFetchingEnvironment,
       @InputArgument id: String,
       @InputArgument mode: DayMode? = null,
       @InputArgument date: Double? = null,
@@ -104,7 +108,9 @@ class TrackedDayService {
             DgsInvalidInputArgumentException("Couldn't find TrackedDay[${id}]")
          }
 
-      return updateTrackedDay(record, mode, date, trackedTaskIds)
+      return dgsMutate(dfe) {
+         updateTrackedDay(record, mode, date, trackedTaskIds)
+      }
    }
 
    fun updateTrackedDay(
@@ -112,14 +118,14 @@ class TrackedDayService {
       mode: DayMode? = null,
       date: Double? = null,
       trackedTaskIds: List<String>? = null,
-   ): TrackedDay {
+   ): ETrackedDay {
 
       val copy = trackedDay.copy(
          mode = mode ?: trackedDay.mode,
          date = if (date != null) Date(date.toLong()) else trackedDay.date,
          trackedTaskIds = trackedTaskIds ?: trackedDay.trackedTaskIds
       )
-      return repository.save(copy).toGqlType()
+      return repository.save(copy)
    }
 
    //

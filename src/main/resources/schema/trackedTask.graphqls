@@ -11,6 +11,7 @@ extend type Mutation {
         id: ID!,
         notes: String,
         chargeCodeIds: [ID!]
+        timeSlots: [Int!]
     ): TrackedTask!
     deleteTrackedTask(id: ID): Boolean
 }
@@ -18,8 +19,10 @@ extend type Mutation {
 type TrackedTask {
     id: ID!
     notes: String
+    timeSlots: [Int!]
 
     trackedDay: TrackedDay
     chargeCodes: [ChargeCode!]
-    timeBlocks: [TimeBlock!]
+
+    #    timeBlocks: [TimeBlock!]
 }
