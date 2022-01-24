@@ -16,6 +16,7 @@ extend type Mutation {
 type TrackedDay {
     id: ID!
     date: Float!
+    week: Int!
     mode: DayMode!
 
     user: User

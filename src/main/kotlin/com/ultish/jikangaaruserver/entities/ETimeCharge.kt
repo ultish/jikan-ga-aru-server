@@ -23,7 +23,7 @@ data class ETimeCharge(
       trackedDayId: String,
       chargeCodeId: String,
    ) : this(
-      id = "${chargeCodeId}:${timeSlot}",
+      id = "$trackedDayId:${timeSlot}:${chargeCodeId}",
       timeSlot = timeSlot,
       chargeCodeAppearance = chargeCodeAppearance,
       totalChargeCodesForSlot = totalChargeCodesForSlot,

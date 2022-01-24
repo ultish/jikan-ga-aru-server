@@ -1,0 +1,38 @@
+package com.ultish.jikangaaruserver.entities
+
+import com.querydsl.core.annotations.QueryEntity
+import com.ultish.generated.types.TimeChargeTotal
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.Indexed
+import org.springframework.data.mongodb.core.mapping.Document
+
+@Document(value = "timeChargeTotal")
+@QueryEntity
+data class ETimeChargeTotal(
+   @Id
+   val id: String,
+   val value: Double,
+   @Indexed
+   val trackedDayId: String,
+   @Indexed
+   val chargeCodeId: String,
+) : GraphQLEntity<TimeChargeTotal> {
+   constructor(
+      value: Double,
+      trackedDayId: String,
+      chargeCodeId: String,
+   ) : this(
+      id = "$trackedDayId:$chargeCodeId",
+      value = value,
+      trackedDayId = trackedDayId,
+      chargeCodeId = chargeCodeId
+   )
+
+   override fun toGqlType(): TimeChargeTotal =
+      TimeChargeTotal(
+         id,
+         value
+      )
+
+   override fun id(): String = id
+}

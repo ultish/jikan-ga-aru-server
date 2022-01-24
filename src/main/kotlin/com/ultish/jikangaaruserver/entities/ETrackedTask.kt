@@ -11,15 +11,28 @@ import org.springframework.data.mongodb.core.mapping.Document
 @QueryEntity
 data class ETrackedTask(
    @Id
-   val id: String = ObjectId().toString(),
+   val id: String,
    val notes: String?,
-   @Indexed
-   val timeSlots: List<Int> = listOf(),
    @Indexed
    val trackedDayId: String,
    @Indexed
+   val timeSlots: List<Int> = listOf(),
+   @Indexed
    val chargeCodeIds: List<String> = listOf(),
 ) : GraphQLEntity<TrackedTask> {
+   constructor(
+      notes: String?,
+      trackedDayId: String,
+      timeSlots: List<Int> = listOf(),
+      chargeCodeIds: List<String> = listOf(),
+   ) : this(
+      "$trackedDayId:${ObjectId()}",
+      notes,
+      trackedDayId,
+      timeSlots,
+      chargeCodeIds
+   )
+
    override fun toGqlType(): TrackedTask = TrackedTask(id, notes, timeSlots)
    override fun id(): String = id
 }

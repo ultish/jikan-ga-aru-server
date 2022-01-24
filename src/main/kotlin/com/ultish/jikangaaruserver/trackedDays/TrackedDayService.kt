@@ -80,9 +80,15 @@ class TrackedDayService {
          throw DgsInvalidInputArgumentException("Date[${Date(date.toLong())} already exists")
       }
 
+      val d = Date(date.toLong())
+      val cal = Calendar.getInstance()
+      cal.time = d
+      val week = cal.get(Calendar.WEEK_OF_YEAR)
+
       return dgsMutate(dfe) {
          repository.save(ETrackedDay(
-            date = Date(date.toLong()),
+            date = d,
+            week = week,
             mode = mode ?: DayMode.NORMAL,
             userId = userId,
          ))

@@ -1,5 +1,5 @@
 extend type Query {
-    timeCharges(timeSlot: Int, chargeCodeId: ID): [TimeCharge!]
+    timeCharges(trackedDayId: String, timeSlot: Int, chargeCodeId: ID): [TimeCharge!]
 }
 
 extend type Mutation {

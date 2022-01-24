@@ -13,27 +13,6 @@ enum DayMode {
     HOL_ANNUAL
 }
 
-type Timesheet {
-    id: ID!
-    weekEndingDate: Float!
-    user: User!
-    timeCharged: [TimeCharge!]
-    trackedDays: [TrackedDay!]
-}
-
-## TODO question is do we store vertically or horizontally via TimeBlocks
-#type TimeSlot {
-#    id: ID!
-#    # a day is broken up into 6min time slots. 0 = 00:00, 1 = 00:06, 2 = 00:12 etc
-#    timeSlot: Int!
-#    trackedTask: TrackedTask!
-#    chargeCode: [ChargeCode]!
-#
-#    trackedDay: TrackedDay!
-#}
-
-
-
 type Query {
     # define any generic queries here
 }

@@ -1,6 +1,7 @@
 package com.ultish.jikangaaruserver.dataFetchers
 
 import com.netflix.graphql.dgs.context.DgsContext
+import com.netflix.graphql.dgs.exceptions.DgsBadRequestException
 import com.querydsl.core.types.Predicate
 import com.querydsl.core.types.dsl.StringPath
 import com.ultish.jikangaaruserver.contexts.CustomContext
@@ -112,6 +113,11 @@ fun createPageable(
       pageNumber,
       itemsPerPage
    )
+}
+
+fun getUser(dfe: DataFetchingEnvironment): String {
+   val request = DgsContext.getRequestData(dfe)
+   return request?.headers?.getFirst("user-id") ?: throw DgsBadRequestException("user-id not provided in headers")
 }
 
 fun <G, E : GraphQLEntity<G>> dgsQuery(

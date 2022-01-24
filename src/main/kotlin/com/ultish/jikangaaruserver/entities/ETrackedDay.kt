@@ -15,6 +15,7 @@ data class ETrackedDay(
    @Id
    val id: String = ObjectId().toString(),
    val date: Date,
+   val week: Int,
    val mode: DayMode,
    @Indexed
    val userId: String,
@@ -24,6 +25,7 @@ data class ETrackedDay(
    override fun toGqlType(): TrackedDay =
       TrackedDay(id,
          date.time.toDouble(),
+         week,
          mode
       )
 

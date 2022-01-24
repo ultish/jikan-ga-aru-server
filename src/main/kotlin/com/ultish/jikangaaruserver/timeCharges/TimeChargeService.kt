@@ -7,15 +7,18 @@ import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.ChargeCode
 import com.ultish.generated.types.TimeCharge
+import com.ultish.generated.types.TrackedDay
 import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeService
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.dgsData
 import com.ultish.jikangaaruserver.dataFetchers.dgsMutate
 import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
+import com.ultish.jikangaaruserver.dataFetchers.getEntitiesFromEnv
 import com.ultish.jikangaaruserver.entities.ETimeCharge
 import com.ultish.jikangaaruserver.entities.ETrackedTask
 import com.ultish.jikangaaruserver.entities.QETimeCharge
 import com.ultish.jikangaaruserver.entities.QETrackedTask
+import com.ultish.jikangaaruserver.trackedDays.TrackedDayService
 import com.ultish.jikangaaruserver.trackedTasks.TrackedTaskService
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.MappedBatchLoaderWithContext
@@ -26,7 +29,8 @@ import java.util.concurrent.CompletableFuture
 class TimeChargeService {
 
    private companion object {
-      const val DATA_LOADER_FOR_CHARGE_CODE = "chargeCodesForTimeCharge"
+      const val DATA_LOADER_FOR_CHARGE_CODE = "chargeCodeForTimeCharge"
+      const val DATA_LOADER_FOR_TRACKED_DAY = "trackedDayForTimeCharge"
    }
 
    @Autowired
@@ -38,14 +42,22 @@ class TimeChargeService {
    @Autowired
    lateinit var chargeCodeService: ChargeCodeService
 
+   @Autowired
+   lateinit var trackedDayService: TrackedDayService
+
    @DgsQuery
    fun timeCharges(
       dfe: DataFetchingEnvironment,
+      @InputArgument trackedDayId: String? = null,
       @InputArgument timeSlot: Int? = null,
       @InputArgument chargeCodeId: String? = null,
    ): List<TimeCharge> {
       return dgsQuery(dfe) {
          val builder = BooleanBuilder()
+
+         trackedDayId?.let {
+            builder.and(QETimeCharge.eTimeCharge.trackedDayId.eq(trackedDayId))
+         }
          timeSlot?.let {
             builder.and(QETimeCharge.eTimeCharge.timeSlot.eq(timeSlot))
          }
@@ -114,30 +126,40 @@ class TimeChargeService {
    }
 
    fun updateTimeCharges(
-      trackedTaskToSave: ETrackedTask,
+      trackedTaskToSave: ETrackedTask? = null,
       trackedDayId: String,
-      timeSlotsAdded: List<Int>,
-//      timeSlotsRemoved: List<Int>,
+      timeSlotsChanged: List<Int>,
    ) {
 
-      // TODO the following code works for timeslotsAdded, for removed we need to do something different
-      //  for example we may need to delete timeCharges when it's the last one using it in the remove case.
-      //  and need to see if remove and add have same logic here for caclualting timeCharges
+      // Find all the Tracked Tasks that use any of the TimeSlots that have changed, these will need new TimeCharge
+      // calculations
+      val affectedTrackedTasks = trackedTaskService.repository.findAll(
+         BooleanBuilder()
+            .and(QETrackedTask.eTrackedTask.timeSlots.any().`in`(timeSlotsChanged))
+            .and(QETrackedTask.eTrackedTask.trackedDayId.eq(trackedDayId))
+      ).toMutableList()
 
-      val affectedTrackedTasks = trackedTaskService.repository.findAll(QETrackedTask.eTrackedTask.timeSlots.any().`in`
-         (timeSlotsAdded)).toMutableList()
+      if (trackedTaskToSave != null) {
+         // this function is called during beforeSave, so remove the stored version
+         affectedTrackedTasks.removeIf { it.id == trackedTaskToSave.id }
+         // and add the before saved version
+         affectedTrackedTasks.add(trackedTaskToSave)
+         // TODO may be odd, since the saved version hasn't made it to the DB and could fail
+      }
 
-      // this function is called during beforeSave, so remove the stored version
-      affectedTrackedTasks.removeIf { it.id == trackedTaskToSave.id }
-      // and add the before saved version
-      affectedTrackedTasks.add(trackedTaskToSave)
-      // TODO may be odd, since the saved version hasn't made it to the DB and could fail
-
-      val timeSlotToTrackedTasksMap = timeSlotsAdded.associateBy({ it }, { timeSlot ->
+      // For each TimeSlot group any TrackedTasks that use it
+      val timeSlotToTrackedTasksMap = timeSlotsChanged.associateBy({ it }, { timeSlot ->
          affectedTrackedTasks.filter {
             it.timeSlots.contains(timeSlot)
          }
       })
+
+      val timeSlotToTimeChargesMap = repository.findAll(BooleanBuilder()
+         .and(QETimeCharge.eTimeCharge.timeSlot.`in`(timeSlotsChanged))
+         .and(QETimeCharge.eTimeCharge.trackedDayId.eq(trackedDayId))
+      ).groupBy { it.timeSlot }
+
+      val toDelete = mutableSetOf<ETimeCharge>()
 
       val allTimeCharges: List<ETimeCharge> = timeSlotToTrackedTasksMap.entries.flatMap { entry ->
          val timeSlot = entry.key
@@ -147,6 +169,16 @@ class TimeChargeService {
          val allChargeCodes = trackedTasksAtTimeSlot.flatMap { trackedTask -> trackedTask.chargeCodeIds }
          val numberOfChargeCodes = allChargeCodes.size
          val chargeCodeIdsAtTimeSlot = allChargeCodes.distinct()
+
+         // find TimeCharges for ChargeCodes at this TimeSlot that aren't used anymore
+         val timeChargesForTimeSlot = timeSlotToTimeChargesMap[timeSlot]
+
+         val timeChargesNotUsedByChargeCodesAnymore = timeChargesForTimeSlot?.filter {
+            !chargeCodeIdsAtTimeSlot.contains(it.chargeCodeId)
+         } ?: listOf()
+         toDelete.addAll(timeChargesNotUsedByChargeCodesAnymore)
+
+         println("These TimeCharges aren't used by ChargeCodes at timeslot $timeSlot: $timeChargesNotUsedByChargeCodesAnymore")
 
          // map to TimeCharge per chargecode ID
          val timeCharges = chargeCodeIdsAtTimeSlot.map { chargeCodeId ->
@@ -176,6 +208,8 @@ class TimeChargeService {
       val newTimeCharges = allTimeCharges.minus(existingTimeCharges.toSet())
 
 
+      repository.deleteAll(toDelete)
+
       existingTimeCharges.forEach {
          updateTimeCharge(it, it.chargeCodeAppearance, it.totalChargeCodesForSlot)
       }
@@ -185,13 +219,31 @@ class TimeChargeService {
       }
    }
 
+   fun resetTimeCharges(trackedDayId: String) {
+      // full time range 0=00:00, 1=00:06, 2=00:12, etc to X=23:54, 10 per hour
+      val timeSlots = (0..240).toList()
+
+      updateTimeCharges(
+         trackedDayId = trackedDayId,
+         timeSlotsChanged = timeSlots
+      )
+   }
+
    //
    // Document References (relationships)
    // -------------------------------------------------------------------------
    @DgsData(parentType = DgsConstants.TIMECHARGE.TYPE_NAME,
       field = DgsConstants.TIMECHARGE.ChargeCode)
-   fun relatedChargeCodes(dfe: DataFetchingEnvironment): CompletableFuture<ChargeCode> {
+   fun relatedChargeCode(dfe: DataFetchingEnvironment): CompletableFuture<ChargeCode> {
       return dgsData<ChargeCode, TimeCharge>(dfe, DATA_LOADER_FOR_CHARGE_CODE) {
+         it.id
+      }
+   }
+
+   @DgsData(parentType = DgsConstants.TIMECHARGE.TYPE_NAME,
+      field = DgsConstants.TIMECHARGE.TrackedDay)
+   fun relatedTrackedDay(dfe: DataFetchingEnvironment): CompletableFuture<TrackedDay> {
+      return dgsData<TrackedDay, TimeCharge>(dfe, DATA_LOADER_FOR_TRACKED_DAY) {
          it.id
       }
    }
@@ -206,13 +258,9 @@ class TimeChargeService {
 
          val customContext = DgsContext.getCustomContext<CustomContext>(environment)
 
-         val timeChargeToChargeCodeMap = customContext.entities.mapNotNull {
-            if (it is ETimeCharge && timeChargeIds.contains(it.id)) {
-               it
-            } else {
-               null
-            }
-         }.associateBy({ it.id }, { it.chargeCodeId })
+         val timeChargeToChargeCodeMap = getEntitiesFromEnv<String, ETimeCharge>(environment, timeChargeIds) { it ->
+            it.chargeCodeId
+         }
 
          val chargeCodeMap = chargeCodeService.repository.findAllById(
             timeChargeToChargeCodeMap.values.toList())
@@ -228,6 +276,36 @@ class TimeChargeService {
             val chargeCode =
                timeChargeToChargeCodeMap[timeChargeId]?.let { chargeCodeMap[it] }
             chargeCode?.toGqlType()
+         }
+      }
+   }
+
+   @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_DAY, caching = true)
+   val loadForTrackedDayBatchLoader = MappedBatchLoaderWithContext<String, TrackedDay> { timeChargeIds, environment ->
+      CompletableFuture.supplyAsync {
+         // Relationship: Many-To-One
+
+         val customContext = DgsContext.getCustomContext<CustomContext>(environment)
+
+         val timeChargeToTrackedDayMap = getEntitiesFromEnv<String, ETimeCharge>(environment, timeChargeIds) { it ->
+            it.trackedDayId
+         }
+
+         val trackedDayMap = trackedDayService.repository.findAllById(
+            timeChargeToTrackedDayMap.values.toList())
+            .associateBy { it.id }
+
+         // TODO not sure how these contexts are used in a federated graphQL scenario. I assume it probably wouldn't
+         //  and I'd have to re-implement the logic to fetch from DB for the related trackedDayIds here if this was
+         //  split into it's own microservice
+         // pass down to next level if needed
+         customContext.entities.addAll(trackedDayMap.values)
+
+         timeChargeToTrackedDayMap.keys.associateWith { timeChargeId ->
+            val trackedDay =
+               timeChargeToTrackedDayMap[timeChargeId]?.let { trackedDayMap[it] }
+
+            trackedDay?.toGqlType()
          }
       }
    }

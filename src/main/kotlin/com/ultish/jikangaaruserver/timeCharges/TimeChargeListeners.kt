@@ -1,9 +1,13 @@
 package com.ultish.jikangaaruserver.timeCharges
 
 import com.ultish.jikangaaruserver.entities.ETrackedTask
+import com.ultish.jikangaaruserver.listeners.getIdFrom
 import com.ultish.jikangaaruserver.trackedTasks.TrackedTaskService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.mongodb.core.mapping.event.*
+import org.springframework.data.mongodb.core.mapping.event.AbstractMongoEventListener
+import org.springframework.data.mongodb.core.mapping.event.AfterDeleteEvent
+import org.springframework.data.mongodb.core.mapping.event.BeforeDeleteEvent
+import org.springframework.data.mongodb.core.mapping.event.BeforeSaveEvent
 import org.springframework.stereotype.Component
 
 @Component
@@ -28,8 +32,8 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
          val addedTimeSlots = event.source.timeSlots.minus(existingTimeSlots.toSet())
          val removedTimeSlots = existingTimeSlots.minus(event.source.timeSlots.toSet())
 
-         println(addedTimeSlots)
-         println(removedTimeSlots)
+         println("added timeslots: $addedTimeSlots")
+         println("removed timeslots: $removedTimeSlots")
 
          val trackedTaskToSave = event.source
 
@@ -38,20 +42,20 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
             addedTimeSlots + removedTimeSlots)
       }
 
-      // TODO try to find differences
    }
 
-   override fun onAfterSave(event: AfterSaveEvent<ETrackedTask>) {
-      // if tracked task was saved then timecharges may change
+   override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
+      super.onAfterDelete(event)
 
-      super.onAfterSave(event)
+      // TODO as these mongo events are limiting it may be time to move to custom events instead.
+      //  That way you can always provide the difference of before and after save or delete
+      //  For now, we're jamming data into the IDs of the objects which is dodgy
+      val id = getIdFrom(event)
+      val (trackedDayId, _) = id?.split(":") ?: listOf()
 
-      /*
-      whenever TrackedTasks change we need to:
-       1. find all tracked tasks for the given tracked day
-       2.
-
-       */
+      if (trackedDayId != null) {
+         timeChargeService.resetTimeCharges(trackedDayId)
+      }
    }
 
    override fun onBeforeDelete(event: BeforeDeleteEvent<ETrackedTask>) {
@@ -59,8 +63,4 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
 
    }
 
-   override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
-      // if the tracked task was deleted then timecharges may change
-      super.onAfterDelete(event)
-   }
 }
