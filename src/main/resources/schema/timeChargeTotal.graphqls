@@ -2,14 +2,14 @@ extend type Query {
     timeChargeTotals(week: Int): [TimeChargeTotal!]
 }
 
-
-type Timesheet {
-    id: ID!
-    weekEndingDate: Float!
-    user: User
-    trackedDays: [TrackedDay!]
-    timeChargeTotals: [TimeChargeTotal!]
-}
+#
+#type Timesheet {
+#    id: ID!
+#    weekEndingDate: Float!
+#    user: User
+#    trackedDays: [TrackedDay!]
+#    timeChargeTotals: [TimeChargeTotal!]
+#}
 
 """
 This represents a single ChargeCode for a Tracked Day and the value for the timesheet
