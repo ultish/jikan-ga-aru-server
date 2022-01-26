@@ -16,16 +16,20 @@ data class ETimeChargeTotal(
    val trackedDayId: String,
    @Indexed
    val chargeCodeId: String,
+   @Indexed
+   val userId: String,
 ) : GraphQLEntity<TimeChargeTotal> {
    constructor(
       value: Double,
       trackedDayId: String,
       chargeCodeId: String,
+      userId: String,
    ) : this(
-      id = "$trackedDayId:$chargeCodeId",
+      id = "$userId:$trackedDayId:$chargeCodeId",
       value = value,
       trackedDayId = trackedDayId,
-      chargeCodeId = chargeCodeId
+      chargeCodeId = chargeCodeId,
+      userId = userId,
    )
 
    override fun toGqlType(): TimeChargeTotal =

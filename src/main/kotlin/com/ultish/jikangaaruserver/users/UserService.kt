@@ -54,6 +54,10 @@ class UserService {
       @InputArgument username: String,
       @InputArgument password: String,
    ): User {
+      if (repository.exists(QEUser.eUser.username.eq(username))) {
+         throw DgsInvalidInputArgumentException("Username: $username already exists")
+      }
+      
       return repository.save(
          EUser(
             username = username,
@@ -113,7 +117,7 @@ class UserService {
 
          val trackedDays = trackedDayRepository.findAll(QETrackedDay.eTrackedDay.userId.`in`(userIds))
          customContext.entities.addAll(trackedDays)
-         
+
          trackedDays.groupBy({ it.userId }, { it.toGqlType() })
       }
    }

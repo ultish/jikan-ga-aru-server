@@ -36,8 +36,11 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
          println("removed timeslots: $removedTimeSlots")
 
          val trackedTaskToSave = event.source
+         val userId = trackedTaskToSave.userId
 
-         timeChargeService.updateTimeCharges(trackedTaskToSave,
+         timeChargeService.updateTimeCharges(
+            userId,
+            trackedTaskToSave,
             trackedTaskToSave.trackedDayId,
             addedTimeSlots + removedTimeSlots)
       }
@@ -51,10 +54,10 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
       //  That way you can always provide the difference of before and after save or delete
       //  For now, we're jamming data into the IDs of the objects which is dodgy
       val id = getIdFrom(event)
-      val (trackedDayId, _) = id?.split(":") ?: listOf()
+      val (userId, trackedDayId, _) = id?.split(":") ?: listOf()
 
       if (trackedDayId != null) {
-         timeChargeService.resetTimeCharges(trackedDayId)
+         timeChargeService.resetTimeCharges(userId, trackedDayId)
       }
    }
 

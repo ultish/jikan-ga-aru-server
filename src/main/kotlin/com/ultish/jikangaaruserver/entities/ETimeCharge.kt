@@ -15,6 +15,7 @@ data class ETimeCharge(
    val totalChargeCodesForSlot: Int,
    val trackedDayId: String,
    val chargeCodeId: String,
+   val userId: String,
 ) : GraphQLEntity<TimeCharge> {
    constructor(
       timeSlot: Int,
@@ -22,13 +23,16 @@ data class ETimeCharge(
       totalChargeCodesForSlot: Int,
       trackedDayId: String,
       chargeCodeId: String,
+      userId: String,
    ) : this(
-      id = "$trackedDayId:${timeSlot}:${chargeCodeId}",
+      id = "$userId:$trackedDayId:${timeSlot}:${chargeCodeId}",
       timeSlot = timeSlot,
       chargeCodeAppearance = chargeCodeAppearance,
       totalChargeCodesForSlot = totalChargeCodesForSlot,
       trackedDayId = trackedDayId,
-      chargeCodeId = chargeCodeId)
+      chargeCodeId = chargeCodeId,
+      userId = userId,
+   )
 
    override fun toGqlType(): TimeCharge =
       TimeCharge(

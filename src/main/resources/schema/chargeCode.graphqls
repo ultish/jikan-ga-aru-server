@@ -1,5 +1,5 @@
 extend type Query {
-    chargeCodes(ids: [ID!], name: String, code: String, description: String, expired: Boolean): [ChargeCode]
+    chargeCodes(ids: [ID!], name: String, code: String, description: String, expired: Boolean): [ChargeCode!]
 }
 
 extend type Mutation {

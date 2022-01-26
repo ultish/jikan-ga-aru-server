@@ -10,10 +10,7 @@ import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.TrackedTask
 import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeRepository
 import com.ultish.jikangaaruserver.contexts.CustomContext
-import com.ultish.jikangaaruserver.dataFetchers.delete
-import com.ultish.jikangaaruserver.dataFetchers.dgsData
-import com.ultish.jikangaaruserver.dataFetchers.dgsMutate
-import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
+import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.ETrackedTask
 import com.ultish.jikangaaruserver.entities.QETrackedTask
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
@@ -36,9 +33,6 @@ class TrackedTaskService {
 
    @Autowired
    lateinit var trackedDayRepository: TrackedDayRepository
-
-//   @Autowired
-//   lateinit var timeBlockRepository: TimeBlockRepository
 
    @Autowired
    lateinit var chargeCodeRepository: ChargeCodeRepository
@@ -68,11 +62,16 @@ class TrackedTaskService {
          throw DgsInvalidInputArgumentException("Couldn't find TrackedDay[${trackedDayId}]")
       }
 
+      // TODO validate this userId is real
+      val userId = getUser(dfe)
+
+
       return dgsMutate(dfe) {
          repository.save(
             ETrackedTask(
                trackedDayId = trackedDayId,
-               notes = notes
+               notes = notes,
+               userId = userId
             )
          )
       }

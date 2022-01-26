@@ -19,3 +19,6 @@ type Query {
 type Mutation {
     # define any generic mutations here
 }
+type Subscription {
+    # define any generic subscriptions here
+}

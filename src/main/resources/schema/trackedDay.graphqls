@@ -7,7 +7,7 @@ extend type Query  {
 }
 
 extend type Mutation {
-    createTrackedDay(userId: ID!, date: Float!, mode: DayMode): TrackedDay
+    createTrackedDay(date: Float!, mode: DayMode): TrackedDay
     deleteTrackedDay(id: ID!): Boolean
     updateTrackedDay(id: ID!, mode: DayMode, date: Float, trackedTaskIds: [String!]): TrackedDay
 }

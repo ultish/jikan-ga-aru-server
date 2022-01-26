@@ -3,7 +3,6 @@ package com.ultish.jikangaaruserver
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
@@ -16,7 +15,7 @@ fun main(args: Array<String>) {
 
 // Enable CORS
 @Configuration
-@Profile("prod")
+//@Profile("prod")/**/
 class WebConfig : WebMvcConfigurer {
    override fun addCorsMappings(registry: CorsRegistry) {
       registry.addMapping("/**")

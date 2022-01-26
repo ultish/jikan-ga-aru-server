@@ -64,10 +64,11 @@ class TrackedDayService {
    @DgsMutation
    fun createTrackedDay(
       dfe: DataFetchingEnvironment,
-      @InputArgument userId: String,
       @InputArgument date: Double, // not confusing at all, graphql's Float is passed in as a Double
       @InputArgument mode: DayMode?,
    ): TrackedDay {
+      val userId = getUser(dfe)
+
       if (!userRepository.existsById(userId)) {
          throw DgsInvalidInputArgumentException("Couldn't find User[${userId}]")
       }

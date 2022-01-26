@@ -19,18 +19,22 @@ data class ETrackedTask(
    val timeSlots: List<Int> = listOf(),
    @Indexed
    val chargeCodeIds: List<String> = listOf(),
+   @Indexed
+   val userId: String,
 ) : GraphQLEntity<TrackedTask> {
    constructor(
       notes: String?,
       trackedDayId: String,
       timeSlots: List<Int> = listOf(),
       chargeCodeIds: List<String> = listOf(),
+      userId: String,
    ) : this(
-      "$trackedDayId:${ObjectId()}",
+      "$userId:$trackedDayId:${ObjectId()}",
       notes,
       trackedDayId,
       timeSlots,
-      chargeCodeIds
+      chargeCodeIds,
+      userId,
    )
 
    override fun toGqlType(): TrackedTask = TrackedTask(id, notes, timeSlots)

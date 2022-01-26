@@ -1,6 +1,9 @@
 extend type Query {
     timeChargeTotals(week: Int): [TimeChargeTotal!]
 }
+extend type Subscription {
+    timeChargeTotalChanged(userId: String!): TimeChargeTotal
+}
 
 #
 #type Timesheet {
@@ -18,5 +21,6 @@ type TimeChargeTotal {
     id: ID!
     value: Float,
     trackedDay: TrackedDay,
-    chargeCode: ChargeCode
+    chargeCode: ChargeCode,
+    user: User,
 }

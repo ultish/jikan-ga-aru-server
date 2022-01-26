@@ -10,10 +10,7 @@ import com.ultish.generated.types.TimeCharge
 import com.ultish.generated.types.TrackedDay
 import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeService
 import com.ultish.jikangaaruserver.contexts.CustomContext
-import com.ultish.jikangaaruserver.dataFetchers.dgsData
-import com.ultish.jikangaaruserver.dataFetchers.dgsMutate
-import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
-import com.ultish.jikangaaruserver.dataFetchers.getEntitiesFromEnv
+import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.ETimeCharge
 import com.ultish.jikangaaruserver.entities.ETrackedTask
 import com.ultish.jikangaaruserver.entities.QETimeCharge
@@ -85,13 +82,18 @@ class TimeChargeService {
          throw DgsInvalidInputArgumentException("TimeCharge for [${chargeCodeId}:${timeSlot}] already exists")
       }
 
+      val userId = getUser(dfe)
+
       return dgsMutate(dfe) {
          repository.save(
-            ETimeCharge(timeSlot,
+            ETimeCharge(
+               timeSlot,
                chargeCodeAppearance,
                totalChargeCodesForSlot,
                trackedDayId,
-               chargeCodeId)
+               chargeCodeId,
+               userId,
+            )
          )
       }
    }
@@ -126,6 +128,7 @@ class TimeChargeService {
    }
 
    fun updateTimeCharges(
+      userId: String,
       trackedTaskToSave: ETrackedTask? = null,
       trackedDayId: String,
       timeSlotsChanged: List<Int>,
@@ -191,7 +194,8 @@ class TimeChargeService {
                chargeCodeAppearance = chargeCodeAppearance,
                totalChargeCodesForSlot = numberOfChargeCodes,
                trackedDayId = trackedDayId,
-               chargeCodeId = chargeCodeId
+               chargeCodeId = chargeCodeId,
+               userId = userId,
             )
          }
 
@@ -219,13 +223,14 @@ class TimeChargeService {
       }
    }
 
-   fun resetTimeCharges(trackedDayId: String) {
+   fun resetTimeCharges(userId: String, trackedDayId: String) {
       // full time range 0=00:00, 1=00:06, 2=00:12, etc to X=23:54, 10 per hour
       val timeSlots = (0..240).toList()
 
       updateTimeCharges(
          trackedDayId = trackedDayId,
-         timeSlotsChanged = timeSlots
+         timeSlotsChanged = timeSlots,
+         userId = userId,
       )
    }
 
@@ -258,7 +263,7 @@ class TimeChargeService {
 
          val customContext = DgsContext.getCustomContext<CustomContext>(environment)
 
-         val timeChargeToChargeCodeMap = getEntitiesFromEnv<String, ETimeCharge>(environment, timeChargeIds) { it ->
+         val timeChargeToChargeCodeMap = getEntitiesFromEnv<String, ETimeCharge>(environment, timeChargeIds) {
             it.chargeCodeId
          }
 

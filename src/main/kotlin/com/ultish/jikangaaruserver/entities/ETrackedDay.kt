@@ -13,15 +13,30 @@ import java.util.*
 @QueryEntity
 data class ETrackedDay(
    @Id
-   val id: String = ObjectId().toString(),
+   val id: String,
    val date: Date,
    val week: Int,
    val mode: DayMode,
    @Indexed
    val userId: String,
    @Indexed
-   val trackedTaskIds: List<String> = listOf(),
+   val trackedTaskIds: List<String>,
 ) : GraphQLEntity<TrackedDay> {
+   constructor(
+      date: Date,
+      week: Int,
+      mode: DayMode,
+      userId: String,
+      trackedTaskIds: List<String> = listOf(),
+   ) : this(
+      id = "$userId:${ObjectId()}",
+      date,
+      week,
+      mode,
+      userId,
+      trackedTaskIds
+   )
+
    override fun toGqlType(): TrackedDay =
       TrackedDay(id,
          date.time.toDouble(),

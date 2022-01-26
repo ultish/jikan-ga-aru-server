@@ -21,8 +21,9 @@ class TimeChargeTotalTimeChargeListener : AbstractMongoEventListener<ETimeCharge
 
       val trackedDay = timeCharge.trackedDayId
       val chargeCode = timeCharge.chargeCodeId
+      val userId = timeCharge.userId
 
-      timeChargeTotalService.updateTimeChargeTotals(trackedDay, chargeCode)
+      timeChargeTotalService.updateTimeChargeTotals(trackedDay, chargeCode, userId)
    }
 
    override fun onAfterDelete(event: AfterDeleteEvent<ETimeCharge>) {
