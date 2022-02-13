@@ -71,13 +71,19 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    sortKey: String,
    after: String? = null,
    first: Int? = null,
+   predicate: Predicate? = null,
 ): Connection<G>
    where R : QuerydslPredicateExecutor<E>,
          R : MongoRepository<E, String> {
 
    val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, after, first)
-   val page = repository.findAll(pagable)
 
+   val page = if (predicate != null) {
+      repository.findAll(predicate, pagable)
+   } else {
+      repository.findAll(pagable)
+   }
+ 
    // load the entity data into the DGS context for later use if necessary (eg dataLoaders)
 //   dfe.graphQlContext.put(DGS_CONTEXT_DATA, page.content)
    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)

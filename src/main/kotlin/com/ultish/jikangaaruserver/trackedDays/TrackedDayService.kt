@@ -42,8 +42,11 @@ class TrackedDayService {
 
    @DgsQuery
    fun trackedDays(dfe: DataFetchingEnvironment): List<TrackedDay> {
+
+      val userId = getUser(dfe)
+
       return dgsQuery(dfe) {
-         repository.findAll()
+         repository.findAll(QETrackedDay.eTrackedDay.userId.eq(userId))
       }
    }
 
@@ -53,12 +56,17 @@ class TrackedDayService {
       @InputArgument after: String?,
       @InputArgument first: Int?,
    ): Connection<TrackedDay> {
+
+      val userId = getUser(dfe)
+
       return fetchPaginated(
          dfe,
          repository,
          QETrackedDay.eTrackedDay.date.toString(),
          after,
-         first)
+         first,
+         QETrackedDay.eTrackedDay.userId.eq(userId)
+      )
    }
 
    @DgsMutation
