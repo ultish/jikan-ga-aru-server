@@ -1,5 +1,5 @@
 extend type Query  {
-    trackedDays: [TrackedDay!]
+    trackedDays(id: ID): [TrackedDay!]
     trackedDaysPaginated(
         after: String,
         first: Int
@@ -17,11 +17,13 @@ type TrackedDay {
     id: ID!
     date: Float!
     week: Int!
+    year: Int!
     mode: DayMode!
 
     user: User
     trackedTasks: [TrackedTask!]
     timeCharges: [TimeCharge!]
+    timeChargeTotals: [TimeChargeTotal!]
 }
 
 # the @connection directive is meant to work but it clashes with dgs-codegen plugin (not supported yet, but there's

@@ -5,15 +5,12 @@ import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
-import com.ultish.generated.types.DayMode
-import com.ultish.generated.types.TrackedDay
-import com.ultish.generated.types.TrackedTask
-import com.ultish.generated.types.User
+import com.ultish.generated.types.*
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.*
-import com.ultish.jikangaaruserver.entities.ETrackedDay
-import com.ultish.jikangaaruserver.entities.QETrackedDay
-import com.ultish.jikangaaruserver.entities.QETrackedTask
+import com.ultish.jikangaaruserver.entities.*
+import com.ultish.jikangaaruserver.timeChargeTotals.TimeChargeTotalRepository
+import com.ultish.jikangaaruserver.timeCharges.TimeChargeRepository
 import com.ultish.jikangaaruserver.trackedTasks.TrackedTaskRepository
 import com.ultish.jikangaaruserver.users.UserRepository
 import graphql.relay.Connection
@@ -29,6 +26,8 @@ class TrackedDayService {
    private companion object {
       const val DATA_LOADER_FOR_TRACKED_TASKS = "trackedTasksForTrackedDay"
       const val DATA_LOADER_FOR_USERS = "usersForTrackedDay"
+      const val DATA_LOADER_FOR_TIME_CHARGES = "timeChargesForTrackedDay"
+      const val DATA_LOADER_FOR_TIME_CHARGE_TOTALS = "timeChargeTotalsForTrackedDay"
    }
 
    @Autowired
@@ -40,13 +39,29 @@ class TrackedDayService {
    @Autowired
    lateinit var userRepository: UserRepository
 
+   @Autowired
+   lateinit var timeChargeRepository: TimeChargeRepository
+
+   @Autowired
+   lateinit var timeChargeTotalRepository: TimeChargeTotalRepository
+
    @DgsQuery
-   fun trackedDays(dfe: DataFetchingEnvironment): List<TrackedDay> {
+   fun trackedDays(
+      dfe: DataFetchingEnvironment,
+      @InputArgument id: String? = null,
+   ): List<TrackedDay> {
 
       val userId = getUser(dfe)
 
+      val builder = BooleanBuilder()
+         .and(QETrackedDay.eTrackedDay.userId.eq(userId))
+
+      id?.let {
+         builder.and(QETrackedDay.eTrackedDay.id.eq(id))
+      }
+      
       return dgsQuery(dfe) {
-         repository.findAll(QETrackedDay.eTrackedDay.userId.eq(userId))
+         repository.findAll(builder)
       }
    }
 
@@ -93,11 +108,13 @@ class TrackedDayService {
       val cal = Calendar.getInstance()
       cal.time = d
       val week = cal.get(Calendar.WEEK_OF_YEAR)
+      val year = cal.get(Calendar.YEAR)
 
       return dgsMutate(dfe) {
          repository.save(ETrackedDay(
             date = d,
             week = week,
+            year = year,
             mode = mode ?: DayMode.NORMAL,
             userId = userId,
          ))
@@ -163,15 +180,26 @@ class TrackedDayService {
    @DgsData(parentType = DgsConstants.TRACKEDDAY.TYPE_NAME,
       field = DgsConstants.TRACKEDDAY.TrackedTasks)
    fun relatedTrackedTasks(dfe: DataFetchingEnvironment): CompletableFuture<List<TrackedTask>> {
-
-//      val dataLoader = dfe.getDataLoader<String, List<TrackedTask>>(DATA_LOADER_FOR_TRACKED_TASKS)
-//      val source = dfe.getSource<TrackedDay>()
-////      dfe.graphQlContext.get<List<ETrackedDay>>("ETRACKEDDAY")
-//
-//      return dataLoader.load(source.id)
-
       return dgsData<List<TrackedTask>, TrackedDay>(dfe,
          DATA_LOADER_FOR_TRACKED_TASKS) { trackedDay ->
+         trackedDay.id
+      }
+   }
+
+   @DgsData(parentType = DgsConstants.TRACKEDDAY.TYPE_NAME,
+      field = DgsConstants.TRACKEDDAY.TimeCharges)
+   fun relatedTimeCharges(dfe: DataFetchingEnvironment): CompletableFuture<List<TimeCharge>> {
+      return dgsData<List<TimeCharge>, TrackedDay>(dfe,
+         DATA_LOADER_FOR_TIME_CHARGES) { trackedDay ->
+         trackedDay.id
+      }
+   }
+
+   @DgsData(parentType = DgsConstants.TRACKEDDAY.TYPE_NAME,
+      field = DgsConstants.TRACKEDDAY.TimeChargeTotals)
+   fun relatedTimeChargeTotals(dfe: DataFetchingEnvironment): CompletableFuture<List<TimeChargeTotal>> {
+      return dgsData<List<TimeChargeTotal>, TrackedDay>(dfe,
+         DATA_LOADER_FOR_TIME_CHARGE_TOTALS) { trackedDay ->
          trackedDay.id
       }
    }
@@ -234,8 +262,7 @@ class TrackedDayService {
             val customContext = DgsContext.getCustomContext<CustomContext>(environment)
 
             // For One-To-Many relationships it's quicker to just look up the One side and groupBy at the end
-            // instead
-            // of using the context object
+            // instead of using the context object
             val trackedTasks = trackedTaskRepository
                .findAll(QETrackedTask.eTrackedTask.trackedDayId
                   .`in`(trackedDayIds)
@@ -248,4 +275,35 @@ class TrackedDayService {
          }
       }
 
+   @DgsDataLoader(name = DATA_LOADER_FOR_TIME_CHARGES, caching = true)
+   val loadTimeChargesForTrackedDayBatchLoader =
+      MappedBatchLoaderWithContext<String, List<TimeCharge>> { trackedDayIds, environment ->
+         CompletableFuture.supplyAsync {
+            // Relationship: One to Many
+            val customContext = DgsContext.getCustomContext<CustomContext>(environment)
+
+            val timeCharges = timeChargeRepository.findAll(QETimeCharge.eTimeCharge.trackedDayId.`in`(trackedDayIds))
+
+            customContext.entities.addAll(timeCharges)
+
+            timeCharges.groupBy({ it.trackedDayId }, { it.toGqlType() })
+         }
+      }
+
+   @DgsDataLoader(name = DATA_LOADER_FOR_TIME_CHARGE_TOTALS, caching = true)
+   val loadTimeChargeTotalsForTrackedDayBatchLoader =
+      MappedBatchLoaderWithContext<String, List<TimeChargeTotal>> { trackedDayIds, environment ->
+         CompletableFuture.supplyAsync {
+            // Relationship: One to Many
+            val customContext = DgsContext.getCustomContext<CustomContext>(environment)
+
+            val timeChargeTotals = timeChargeTotalRepository.findAll(QETimeChargeTotal.eTimeChargeTotal.trackedDayId
+               .`in`
+                  (trackedDayIds))
+
+            customContext.entities.addAll(timeChargeTotals)
+
+            timeChargeTotals.groupBy({ it.trackedDayId }, { it.toGqlType() })
+         }
+      }
 }

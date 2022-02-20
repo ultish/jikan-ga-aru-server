@@ -1,5 +1,10 @@
+input WeekOfYear {
+    week: Int,
+    year: Int!,
+}
+
 extend type Query {
-    timeChargeTotals(week: Int): [TimeChargeTotal!]
+    timeChargeTotals(weekOfYear: WeekOfYear): [TimeChargeTotal!]
 }
 extend type Subscription {
     timeChargeTotalChanged(userId: String!): TimeChargeTotal

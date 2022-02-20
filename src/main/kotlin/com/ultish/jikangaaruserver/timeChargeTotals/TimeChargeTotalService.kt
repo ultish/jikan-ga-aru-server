@@ -7,6 +7,7 @@ import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.ChargeCode
 import com.ultish.generated.types.TimeChargeTotal
 import com.ultish.generated.types.TrackedDay
+import com.ultish.generated.types.WeekOfYear
 import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeService
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.dgsData
@@ -74,21 +75,22 @@ class TimeChargeTotalService {
    @DgsQuery
    fun timeChargeTotals(
       dfe: DataFetchingEnvironment,
-      @InputArgument week: Int? = null,
+      @InputArgument weekOfYear: WeekOfYear? = null,
    ): List<TimeChargeTotal> {
 
       val userId = getUser(dfe)
+      val builder = BooleanBuilder().and(QETrackedDay.eTrackedDay.userId.eq(userId))
 
-      val builder = BooleanBuilder()
-
-      week?.let {
-         val trackedDayIds = trackedDayService.repository.findAll(
-            BooleanBuilder()
-               .and(QETrackedDay.eTrackedDay.week.eq(it))
-               .and(QETrackedDay.eTrackedDay.userId.eq(userId))
-         ).map { trackedDay ->
-            trackedDay.id
+      weekOfYear?.let {
+         val dayBuilder = BooleanBuilder()
+            .and(QETrackedDay.eTrackedDay.year.eq(weekOfYear.year))
+         weekOfYear.week?.let {
+            dayBuilder.and(QETrackedDay.eTrackedDay.week.eq(it))
          }
+         val trackedDayIds = trackedDayService.repository.findAll(dayBuilder)
+            .map { trackedDay ->
+               trackedDay.id
+            }
          builder.and(QETimeChargeTotal.eTimeChargeTotal.trackedDayId.`in`(trackedDayIds))
       }
 
@@ -158,7 +160,7 @@ class TimeChargeTotalService {
          it.id
       }
    }
- 
+
    //
    // Data Loaders
    // -------------------------------------------------------------------------

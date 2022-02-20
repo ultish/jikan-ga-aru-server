@@ -16,6 +16,7 @@ data class ETrackedDay(
    val id: String,
    val date: Date,
    val week: Int,
+   val year: Int,
    val mode: DayMode,
    @Indexed
    val userId: String,
@@ -25,6 +26,7 @@ data class ETrackedDay(
    constructor(
       date: Date,
       week: Int,
+      year: Int,
       mode: DayMode,
       userId: String,
       trackedTaskIds: List<String> = listOf(),
@@ -32,6 +34,7 @@ data class ETrackedDay(
       id = "$userId:${ObjectId()}",
       date,
       week,
+      year,
       mode,
       userId,
       trackedTaskIds
@@ -41,6 +44,7 @@ data class ETrackedDay(
       TrackedDay(id,
          date.time.toDouble(),
          week,
+         year,
          mode
       )
 
