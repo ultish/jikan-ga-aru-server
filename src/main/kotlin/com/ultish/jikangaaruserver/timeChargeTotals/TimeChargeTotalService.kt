@@ -102,7 +102,7 @@ class TimeChargeTotalService {
    fun deletedTimeCharge(deletedTimeCharge: String) {
       // TODO it's not great storing this data in the ID, eg trackedDayId is a composite as well so we need to ignore
       //  it's userId
-      val (userId, _, delTrackedDayId, _, delChargeCodeId) = deletedTimeCharge?.split(":")
+      val (userId, _, delTrackedDayId, _, delChargeCodeId) = deletedTimeCharge.split(":")
 
       // rebuild the trackedDayId
       val trackedDayId = "$userId:$delTrackedDayId"

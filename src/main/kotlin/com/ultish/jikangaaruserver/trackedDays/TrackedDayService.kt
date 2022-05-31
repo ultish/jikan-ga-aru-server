@@ -44,7 +44,7 @@ class TrackedDayService {
 
    @Autowired
    lateinit var timeChargeTotalRepository: TimeChargeTotalRepository
-
+ 
    @DgsQuery
    fun trackedDays(
       dfe: DataFetchingEnvironment,
@@ -59,7 +59,7 @@ class TrackedDayService {
       id?.let {
          builder.and(QETrackedDay.eTrackedDay.id.eq(id))
       }
-      
+
       return dgsQuery(dfe) {
          repository.findAll(builder)
       }
