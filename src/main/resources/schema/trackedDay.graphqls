@@ -30,7 +30,7 @@ type TrackedDay {
 #  an untouched PR...). For now, implementing the types manually here
 type TrackedDayConnection {
     pageInfo: PageInfo!
-    edges: [TrackedDayEdge]
+    edges: [TrackedDayEdge!]
 }
 type TrackedDayEdge {
     cursor: String!
