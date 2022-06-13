@@ -12,6 +12,7 @@ import org.dataloader.BatchLoaderEnvironment
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.domain.Sort.Direction
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 import java.nio.charset.StandardCharsets
@@ -69,6 +70,7 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    dfe: DataFetchingEnvironment,
    repository: R,
    sortKey: String,
+   sortDirection: Direction = Direction.ASC,
    after: String? = null,
    first: Int? = null,
    predicate: Predicate? = null,
@@ -76,14 +78,14 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    where R : QuerydslPredicateExecutor<E>,
          R : MongoRepository<E, String> {
 
-   val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, after, first)
+   val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, sortDirection, after, first)
 
    val page = if (predicate != null) {
       repository.findAll(predicate, pagable)
    } else {
       repository.findAll(pagable)
    }
- 
+
    // load the entity data into the DGS context for later use if necessary (eg dataLoaders)
 //   dfe.graphQlContext.put(DGS_CONTEXT_DATA, page.content)
    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
@@ -107,6 +109,7 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
 
 fun createPageable(
    sortKey: String,
+   sortDirection: Sort.Direction = Sort.Direction.ASC,
    after: String? = null,
    first: Int? = null,
 ): Triple<Pageable, Int, Int> {
@@ -114,8 +117,10 @@ fun createPageable(
    val itemsPerPage = first ?: 10;
    val pageNumber = (index + 1) / itemsPerPage;
 
+   val sorter = Sort.by(sortDirection, sortKey);
+
    return Triple(
-      PageRequest.of(pageNumber, itemsPerPage, Sort.by(sortKey)),
+      PageRequest.of(pageNumber, itemsPerPage, sorter),
       pageNumber,
       itemsPerPage
    )

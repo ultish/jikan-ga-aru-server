@@ -17,6 +17,7 @@ import graphql.relay.Connection
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.MappedBatchLoaderWithContext
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Sort
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -44,7 +45,7 @@ class TrackedDayService {
 
    @Autowired
    lateinit var timeChargeTotalRepository: TimeChargeTotalRepository
- 
+
    @DgsQuery
    fun trackedDays(
       dfe: DataFetchingEnvironment,
@@ -72,12 +73,15 @@ class TrackedDayService {
       @InputArgument first: Int?,
    ): Connection<TrackedDay> {
 
+      // TODO make sort direction an InputArgument
+      
       val userId = getUser(dfe)
 
       return fetchPaginated(
          dfe,
          repository,
-         QETrackedDay.eTrackedDay.date.toString(),
+         "date",
+         Sort.Direction.DESC,
          after,
          first,
          QETrackedDay.eTrackedDay.userId.eq(userId)
