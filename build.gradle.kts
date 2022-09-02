@@ -19,10 +19,10 @@ repositories {
 }
 
 dependencies {
-   implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:latest.release"))
+   implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:5.1.1"))
    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
 //   implementation("com.netflix.graphql.dgs:graphql-dgs-pagination")
-   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure:latest.release")
+   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure:5.1.1")
 
 
    implementation("com.querydsl:querydsl-mongodb:5.0.0")
