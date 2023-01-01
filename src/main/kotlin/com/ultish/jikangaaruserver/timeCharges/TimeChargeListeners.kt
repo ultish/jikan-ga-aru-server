@@ -29,11 +29,27 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
             listOf()
          }
 
-         val addedTimeSlots = event.source.timeSlots.minus(existingTimeSlots.toSet())
-         val removedTimeSlots = existingTimeSlots.minus(event.source.timeSlots.toSet())
+         val chargeCodesChanged = if (existingTrackedTask.isPresent) {
+            val existingCCs = existingTrackedTask.get().chargeCodeIds
+            val newCCs = event.source.chargeCodeIds - existingCCs.toSet();
+            val delCCs = existingCCs - event.source.chargeCodeIds.toSet();
 
-         println("added timeslots: $addedTimeSlots")
-         println("removed timeslots: $removedTimeSlots")
+            (newCCs + delCCs).isNotEmpty()
+         } else {
+            false
+         }
+
+         val timeSlotsChanged = if (chargeCodesChanged) {
+            println("Charge codes changed, re-calculating all timeslot charges")
+            event.source.timeSlots
+         } else {
+            val addedTimeSlots = event.source.timeSlots.minus(existingTimeSlots.toSet())
+            val removedTimeSlots = existingTimeSlots.minus(event.source.timeSlots.toSet())
+            println("added timeslots: $addedTimeSlots")
+            println("removed timeslots: $removedTimeSlots")
+
+            addedTimeSlots + removedTimeSlots
+         }
 
          val trackedTaskToSave = event.source
          val userId = trackedTaskToSave.userId
@@ -42,9 +58,9 @@ class TimeChargeTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
             userId,
             trackedTaskToSave,
             trackedTaskToSave.trackedDayId,
-            addedTimeSlots + removedTimeSlots)
+            timeSlotsChanged
+         )
       }
-
    }
 
    override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
