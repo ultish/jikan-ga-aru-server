@@ -6,32 +6,12 @@ import com.netflix.graphql.dgs.DgsQuery
 import com.netflix.graphql.dgs.InputArgument
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.ultish.generated.types.ChargeCode
-import com.ultish.jikangaaruserver.dataFetchers.delete
-import com.ultish.jikangaaruserver.dataFetchers.dgsMutate
-import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
+import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.EChargeCode
-import com.ultish.jikangaaruserver.entities.QEChargeCode
 import graphql.schema.DataFetchingEnvironment
 import jakarta.persistence.criteria.Predicate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.jpa.domain.Specification
-
-/**
- * An empty Specification so we can build upon it
- */
-inline fun <reified T> emptySpecification(): Specification<T> = Specification { _, _, _ -> null }
-
-/**
- * A common Specification for a list of IDS, will split the list into chunks
- */
-inline fun <reified T> specByIds(ids: List<String>): Specification<T> = Specification { root, _, builder ->
-   val predicates = ids.chunked(1).map { chunk ->
-      val exp = builder.`in`(root.get<String>("id"))
-      chunk.forEach { exp.value(it) }
-      exp
-   }
-   builder.or(*predicates.toTypedArray())
-}
 
 @DgsComponent
 class ChargeCodeService {
@@ -158,6 +138,6 @@ class ChargeCodeService {
    @DgsMutation
    fun deleteChargeCode(@InputArgument id: String): Boolean {
       // TODO validation, can't delete if it's in use
-      return delete(repository, QEChargeCode.eChargeCode.id, id)
+      return delete(repository, id)
    }
 }
