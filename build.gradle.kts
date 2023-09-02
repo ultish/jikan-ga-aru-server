@@ -1,28 +1,35 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-   id("com.netflix.dgs.codegen") version "5.1.14"
-   id("org.springframework.boot") version "2.6.2"
-   id("io.spring.dependency-management") version "1.0.11.RELEASE"
-   id("org.jetbrains.kotlin.plugin.allopen") version "1.6.10"
-   kotlin("jvm") version "1.6.10"
-   kotlin("plugin.spring") version "1.6.10"
-   kotlin("kapt") version "1.6.10"
+   id("com.netflix.dgs.codegen") version "6.0.2"
+   id("io.spring.dependency-management") version "1.1.3"
+   id("org.jetbrains.kotlin.plugin.allopen") version "1.8.22"
+   kotlin("jvm") version "1.8.22"
+   kotlin("plugin.spring") version "1.8.22"
+   kotlin("kapt") version "1.8.22"
 }
 
 group = "com.ultish"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_14
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
    mavenCentral()
 }
-
+dependencyManagement {
+   imports {
+      // We need to define the DGS BOM as follows such that the
+      // io.spring.dependency-management plugin respects the versions expressed in the DGS BOM, e.g. graphql-java
+      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:latest.release")
+   }
+}
 dependencies {
-   implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:5.1.1"))
+   // using dependency management instead
+//   implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:5.1.1"))
    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
 //   implementation("com.netflix.graphql.dgs:graphql-dgs-pagination")
-   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure:5.1.1")
+//   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure:5.1.1")
+   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure")
 
 
    implementation("com.querydsl:querydsl-mongodb:5.0.0")
@@ -61,7 +68,7 @@ tasks.withType<JavaCompile> {
 tasks.withType<KotlinCompile> {
    kotlinOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=all")
-      jvmTarget = "14"
+      jvmTarget = "17"
    }
    dependsOn("generateJava")
 }
