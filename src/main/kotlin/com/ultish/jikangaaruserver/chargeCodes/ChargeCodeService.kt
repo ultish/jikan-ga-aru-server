@@ -16,7 +16,24 @@ import jakarta.persistence.criteria.Predicate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.jpa.domain.Specification
 
+/**
+ * An empty Specification so we can build upon it
+ */
 inline fun <reified T> emptySpecification(): Specification<T> = Specification { _, _, _ -> null }
+
+/**
+ * A common Specification for a list of IDS, will split the list into chunks
+ */
+inline fun <reified T> specByIds(ids: List<String>): Specification<T> = Specification { root, _, builder ->
+   val chunked = ids.chunked(1)
+   val predicates = mutableListOf<Predicate>()
+   chunked.forEach { chunk ->
+      val inIds = builder.`in`(root.get<String>("id"))
+      chunk.forEach { id -> inIds.value(id) }
+      predicates.add(inIds)
+   }
+   builder.or(*predicates.toTypedArray())
+}
 
 @DgsComponent
 class ChargeCodeService {
@@ -35,7 +52,6 @@ class ChargeCodeService {
          ids?.let { ids ->
             val inIds = builder.`in`(root.get<String>("id"))
             ids.forEach { id -> inIds.value(id) }
-
             predicates.add(inIds)
          }
 
@@ -43,14 +59,6 @@ class ChargeCodeService {
             predicates.add(builder.equal(root.get<String>("name"), name))
          }
          builder.and(*predicates.toTypedArray())
-      }
-   }
-
-   fun specIds(ids: List<String>): Specification<EChargeCode> {
-      return Specification { root, _, builder ->
-         val exp = builder.`in`(root.get<String>("ids"))
-         ids.forEach { exp.value(it) }
-         return@Specification exp
       }
    }
 
@@ -74,7 +82,7 @@ class ChargeCodeService {
          val spec = emptySpecification<EChargeCode>()
 
          ids?.let {
-            spec.and(specIds(it))
+            spec.and(specByIds(it))
          }
          name?.let {
             spec.and(specName(it))
