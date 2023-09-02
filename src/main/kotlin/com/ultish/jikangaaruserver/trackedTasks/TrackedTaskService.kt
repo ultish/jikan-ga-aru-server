@@ -12,7 +12,6 @@ import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeRepository
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.ETrackedTask
-import com.ultish.jikangaaruserver.entities.QETrackedTask
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.MappedBatchLoaderWithContext

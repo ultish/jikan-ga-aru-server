@@ -13,8 +13,6 @@ import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.ETimeCharge
 import com.ultish.jikangaaruserver.entities.ETrackedTask
-import com.ultish.jikangaaruserver.entities.QETimeCharge
-import com.ultish.jikangaaruserver.entities.QETrackedTask
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayService
 import com.ultish.jikangaaruserver.trackedTasks.TrackedTaskService
 import graphql.schema.DataFetchingEnvironment
