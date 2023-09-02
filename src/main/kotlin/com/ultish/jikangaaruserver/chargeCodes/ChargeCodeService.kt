@@ -5,7 +5,6 @@ import com.netflix.graphql.dgs.DgsMutation
 import com.netflix.graphql.dgs.DgsQuery
 import com.netflix.graphql.dgs.InputArgument
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
-import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.types.ChargeCode
 import com.ultish.jikangaaruserver.dataFetchers.delete
 import com.ultish.jikangaaruserver.dataFetchers.dgsMutate
@@ -13,13 +12,53 @@ import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
 import com.ultish.jikangaaruserver.entities.EChargeCode
 import com.ultish.jikangaaruserver.entities.QEChargeCode
 import graphql.schema.DataFetchingEnvironment
+import jakarta.persistence.criteria.Predicate
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.jpa.domain.Specification
+
+inline fun <reified T> emptySpecification(): Specification<T> = Specification { _, _, _ -> null }
 
 @DgsComponent
 class ChargeCodeService {
 
    @Autowired
    lateinit var repository: ChargeCodeRepository
+
+   /**
+    * You can combine all the expressions into one, or define a Specification for each type individually and combine
+    * them that way
+    */
+   fun specChargeCodeIdName(ids: List<String>?, name: String?): Specification<EChargeCode> {
+      return Specification { root, _, builder ->
+         val predicates = mutableListOf<Predicate>()
+
+         ids?.let { ids ->
+            val inIds = builder.`in`(root.get<String>("id"))
+            ids.forEach { id -> inIds.value(id) }
+
+            predicates.add(inIds)
+         }
+
+         name?.let {
+            predicates.add(builder.equal(root.get<String>("name"), name))
+         }
+         builder.and(*predicates.toTypedArray())
+      }
+   }
+
+   fun specIds(ids: List<String>): Specification<EChargeCode> {
+      return Specification { root, _, builder ->
+         val exp = builder.`in`(root.get<String>("ids"))
+         ids.forEach { exp.value(it) }
+         return@Specification exp
+      }
+   }
+
+   fun specName(name: String): Specification<EChargeCode> {
+      return Specification { root, _, builder ->
+         builder.equal(root.get<String>("name"), name)
+      }
+   }
 
    @DgsQuery
    fun chargeCodes(
@@ -30,22 +69,34 @@ class ChargeCodeService {
       @InputArgument description: String?,
       @InputArgument expired: Boolean?,
    ): List<ChargeCode> {
+
       return dgsQuery(dfe) {
-         val builder = BooleanBuilder()
+         val spec = emptySpecification<EChargeCode>()
 
          ids?.let {
-            builder.and(QEChargeCode.eChargeCode.id.`in`(it))
+            spec.and(specIds(it))
          }
-         code?.let {
-            builder.and(QEChargeCode.eChargeCode.code.equalsIgnoreCase(it))
+         name?.let {
+            spec.and(specName(it))
          }
-         description?.let {
-            builder.and(QEChargeCode.eChargeCode.description.containsIgnoreCase(it))
-         }
-         expired?.let {
-            builder.and(QEChargeCode.eChargeCode.expired.eq(it))
-         }
-         repository.findAll(builder)
+//         val builder = BooleanBuilder()
+//
+//         ids?.let {
+//            builder.and(QEChargeCode.eChargeCode.id.`in`(it))
+//         }
+//         code?.let {
+//            builder.and(QEChargeCode.eChargeCode.code.equalsIgnoreCase(it))
+//         }
+//         description?.let {
+//            builder.and(QEChargeCode.eChargeCode.description.containsIgnoreCase(it))
+//         }
+//         expired?.let {
+//            builder.and(QEChargeCode.eChargeCode.expired.eq(it))
+//         }
+//         repository.findAll(builder)
+
+//         repository.findAll(this.specChargeCodeIdName(ids, name))
+         repository.findAll(spec)
       }
    }
 
@@ -58,12 +109,14 @@ class ChargeCodeService {
       @InputArgument expired: Boolean = false,
    ): ChargeCode {
       return dgsMutate(dfe) {
-         repository.save(EChargeCode(
-            name = name,
-            code = code,
-            description = description,
-            expired = expired
-         ))
+         repository.save(
+            EChargeCode(
+               name = name,
+               code = code,
+               description = description,
+               expired = expired
+            )
+         )
       }
    }
 
@@ -79,8 +132,10 @@ class ChargeCodeService {
       val record = repository.findById(id)
          .map { it }
          .orElseThrow {
-            DgsInvalidInputArgumentException("Couldn't find " +
-               "ChargeCode[${id}]")
+            DgsInvalidInputArgumentException(
+               "Couldn't find " +
+                  "ChargeCode[${id}]"
+            )
          }
 
       val copy = record.copy(

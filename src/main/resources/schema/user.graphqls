@@ -5,6 +5,7 @@ extend type Query {
 extend type Mutation {
     createUser(username: String!, password: String!): User
     deleteUser(username: String!): Boolean
+    updateUser(userId: ID!, trackedDayIds: [String!]): User
 }
 
 type User {
