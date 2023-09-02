@@ -2,11 +2,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
    id("com.netflix.dgs.codegen") version "6.0.2"
+   id("org.springframework.boot") version "3.1.3"
    id("io.spring.dependency-management") version "1.1.3"
-   id("org.jetbrains.kotlin.plugin.allopen") version "1.8.22"
-   kotlin("jvm") version "1.8.22"
-   kotlin("plugin.spring") version "1.8.22"
-   kotlin("kapt") version "1.8.22"
+   id("org.jetbrains.kotlin.plugin.allopen") version "1.9.10"
+   kotlin("jvm") version "1.9.10"
+   kotlin("plugin.spring") version "1.9.10"
+   kotlin("kapt") version "1.9.10"
 }
 
 group = "com.ultish"
@@ -62,7 +63,8 @@ tasks.withType<com.netflix.graphql.dgs.codegen.gradle.GenerateJavaTask> {
 
 // TODO doesn't work
 tasks.withType<JavaCompile> {
-   options.compilerArgs.addAll(arrayOf("-parameters", "-Aquerydsl.prefix=P"))
+//   options.compilerArgs.addAll(arrayOf("-parameters", "-Aquerydsl.prefix=P"))
+
 }
 
 tasks.withType<KotlinCompile> {

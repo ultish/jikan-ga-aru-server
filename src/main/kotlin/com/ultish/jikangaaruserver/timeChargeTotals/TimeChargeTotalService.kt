@@ -28,10 +28,10 @@ import reactor.core.publisher.ConnectableFlux
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 import java.util.concurrent.CompletableFuture
-import javax.annotation.PostConstruct
+//import javax.annotation.PostConstruct
 
 @DgsComponent
-class TimeChargeTotalService {
+class TimeChargeTotalService() {
 
    companion object {
       const val BLOCK_SIZE = 6
@@ -54,14 +54,22 @@ class TimeChargeTotalService {
    @Autowired
    lateinit var chargeCodeService: ChargeCodeService
 
-   @PostConstruct
-   fun initialise() {
+   init {
       val publisher = Flux.create<ETimeChargeTotal> { emitter ->
          timeChargeTotalStream = emitter
       }
       timeChargeTotalPublisher = publisher.publish()
       timeChargeTotalPublisher.connect()
    }
+
+//   @PostConstruct
+//   fun nope() {
+//      val publisher = Flux.create<ETimeChargeTotal> { emitter ->
+//         timeChargeTotalStream = emitter
+//      }
+//      timeChargeTotalPublisher = publisher.publish()
+//      timeChargeTotalPublisher.connect()
+//   }
 
    @DgsSubscription
    fun timeChargeTotalChanged(@InputArgument userId: String): Publisher<TimeChargeTotal> {
