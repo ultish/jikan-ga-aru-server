@@ -31,17 +31,37 @@ inline fun <reified T> specById(id: String, idAttr: String = "id"): Specificatio
       builder.equal(root.get<String>(idAttr), id)
    }
 
+inline fun <reified T> specEquals(attr: String, value: String): Specification<T> = Specification { root, _, builder ->
+   builder.equal(root.get<String>(attr), value)
+}
+
+inline fun <reified T, R> specEquals(attr: String, value: R): Specification<T> = Specification { root, _, builder ->
+   builder.equal(root.get<R>(attr), value)
+}
+
 /**
  * A common Specification for a list of IDS, will split the list into chunks
  */
-inline fun <reified T> specByIds(ids: List<String>): Specification<T> = Specification { root, _, builder ->
-   val predicates = ids.chunked(1).map { chunk ->
-      val exp = builder.`in`(root.get<String>("id"))
-      chunk.forEach { exp.value(it) }
-      exp
+inline fun <reified T> specByIds(ids: Collection<String>): Specification<T> = specInStrings("id", ids)
+
+inline fun <reified T> specInStrings(attr: String, strings: Collection<String>): Specification<T> =
+   Specification { root, _, builder ->
+      val predicates = strings.chunked(10).map { chunk ->
+         root.get<String>(attr).`in`(chunk)
+//         val exp = builder.`in`(root.get<String>(attr))
+//         chunk.forEach { exp.value(it) }
+//         exp
+      }
+      builder.or(*predicates.toTypedArray())
    }
-   builder.or(*predicates.toTypedArray())
-}
+
+inline fun <reified T, R> specIn(attr: String, objs: Collection<R>): Specification<T> =
+   Specification { root, _, builder ->
+      val predicates = objs.chunked(10).map { chunk ->
+         root.get<R>(attr).`in`(chunk)
+      }
+      builder.or(*predicates.toTypedArray())
+   }
 
 /**
  * Utility to delete an Entity via a String-based key. (eg id, name etc).

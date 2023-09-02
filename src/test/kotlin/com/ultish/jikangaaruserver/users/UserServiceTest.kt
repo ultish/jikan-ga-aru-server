@@ -2,14 +2,14 @@ package com.ultish.jikangaaruserver.users
 
 import com.netflix.graphql.dgs.DgsQueryExecutor
 import com.netflix.graphql.dgs.autoconfig.DgsAutoConfiguration
-import com.querydsl.core.BooleanBuilder
+
 import com.ultish.jikangaaruserver.JikanGaAruServerApplication
+import com.ultish.jikangaaruserver.chargeCodes.SpecificationMatcher
 import com.ultish.jikangaaruserver.entities.EUser
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -38,7 +38,7 @@ class UserServiceTest {
    @BeforeEach
    fun before() {
       Mockito.`when`(
-         repository.findAll(ArgumentMatchers.any(BooleanBuilder::class.java))
+         repository.findAll(Mockito.argThat(SpecificationMatcher(EUser::class.java)))
       ).thenAnswer {
          listOf(
             EUser(
@@ -88,9 +88,7 @@ class UserServiceTest {
    fun exceptional() {
       Mockito.`when`(
          repository.findAll(
-            ArgumentMatchers.any(
-               BooleanBuilder::class.java
-            )
+            Mockito.argThat(SpecificationMatcher(EUser::class.java))
          )
       ).thenThrow(RuntimeException("how exceptional"))
 
