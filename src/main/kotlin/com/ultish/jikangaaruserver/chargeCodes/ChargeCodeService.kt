@@ -25,12 +25,10 @@ inline fun <reified T> emptySpecification(): Specification<T> = Specification { 
  * A common Specification for a list of IDS, will split the list into chunks
  */
 inline fun <reified T> specByIds(ids: List<String>): Specification<T> = Specification { root, _, builder ->
-   val chunked = ids.chunked(1)
-   val predicates = mutableListOf<Predicate>()
-   chunked.forEach { chunk ->
-      val inIds = builder.`in`(root.get<String>("id"))
-      chunk.forEach { id -> inIds.value(id) }
-      predicates.add(inIds)
+   val predicates = ids.chunked(1).map { chunk ->
+      val exp = builder.`in`(root.get<String>("id"))
+      chunk.forEach { exp.value(it) }
+      exp
    }
    builder.or(*predicates.toTypedArray())
 }
