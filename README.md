@@ -1,3 +1,5 @@
+TODO this branch is broken, spring-data-jpa does not support mongodb!!
+
 An exercise in implementing the Timesheet tracker (https://github.com/ultish/jikan-ga-nai-server) using Netflix DGS
 framework and Kotlin.
 

@@ -1,6 +1,5 @@
 package com.ultish.jikangaaruserver.entities
-
-import com.querydsl.core.annotations.QueryEntity
+ 
 import com.ultish.generated.types.User
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
@@ -13,7 +12,6 @@ import org.springframework.data.mongodb.core.mapping.Document
  *    toString(), equals(), hashCode(), and copy()
  */
 @Document(value = "user")
-@QueryEntity
 data class EUser(
    @Id
    val id: String = ObjectId().toString(),

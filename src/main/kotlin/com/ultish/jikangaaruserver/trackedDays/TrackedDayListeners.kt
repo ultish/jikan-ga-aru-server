@@ -1,10 +1,12 @@
 package com.ultish.jikangaaruserver.trackedDays
 
+import com.ultish.jikangaaruserver.dataFetchers.specEquals
+import com.ultish.jikangaaruserver.entities.ETrackedDay
 import com.ultish.jikangaaruserver.entities.ETrackedTask
 import com.ultish.jikangaaruserver.entities.EUser
-import com.ultish.jikangaaruserver.entities.QETrackedDay
 import com.ultish.jikangaaruserver.listeners.getIdFrom
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.mongodb.core.mapping.event.AbstractMongoEventListener
 import org.springframework.data.mongodb.core.mapping.event.AfterDeleteEvent
 import org.springframework.data.mongodb.core.mapping.event.AfterSaveEvent
@@ -17,9 +19,14 @@ class TrackedDayUserListener : AbstractMongoEventListener<EUser>() {
 
    override fun onAfterDelete(event: AfterDeleteEvent<EUser>) {
       getIdFrom(event)?.let { userId ->
-         trackedDayService.repository.findAll(QETrackedDay.eTrackedDay.userId.eq(userId)).forEach { toDel ->
-            trackedDayService.deleteTrackedDay(toDel.id)
-         }
+         trackedDayService.repository.findAll(
+            specEquals<ETrackedDay>("userId", userId)
+         )
+//            QETrackedDay.eTrackedDay.userId.eq(userId))
+
+            .forEach { toDel ->
+               trackedDayService.deleteTrackedDay(toDel.id)
+            }
       }
    }
 }
@@ -41,7 +48,12 @@ class TrackedDayTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>()
 
    override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
       getIdFrom(event)?.let { trackedTaskId ->
-         trackedDayService.repository.findAll(QETrackedDay.eTrackedDay.trackedTaskIds.contains(trackedTaskId))
+         trackedDayService.repository.findAll(
+            Specification<ETrackedDay> { root, _, builder ->
+               builder.isMember(trackedTaskId, root.get<List<String>>("trackedTaskIds"))
+            })
+
+//            QETrackedDay.eTrackedDay.trackedTaskIds.contains(trackedTaskId))
             .forEach { trackedDay ->
                trackedDayService.updateTrackedDay(
                   trackedDay = trackedDay,

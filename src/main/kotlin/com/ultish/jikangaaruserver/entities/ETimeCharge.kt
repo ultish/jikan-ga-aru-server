@@ -1,12 +1,10 @@
 package com.ultish.jikangaaruserver.entities
-
-import com.querydsl.core.annotations.QueryEntity
+ 
 import com.ultish.generated.types.TimeCharge
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(value = "timeCharge")
-@QueryEntity
 data class ETimeCharge(
    @Id
    val id: String,

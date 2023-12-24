@@ -3,17 +3,12 @@ package com.ultish.jikangaaruserver.users
 import com.netflix.graphql.dgs.*
 import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
-import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.User
 import com.ultish.jikangaaruserver.contexts.CustomContext
-import com.ultish.jikangaaruserver.dataFetchers.delete
-import com.ultish.jikangaaruserver.dataFetchers.dgsData
-import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
+import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.EUser
-import com.ultish.jikangaaruserver.entities.QETrackedDay
-import com.ultish.jikangaaruserver.entities.QEUser
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.MappedBatchLoaderWithContext
@@ -40,12 +35,11 @@ class UserService {
       @InputArgument username: String?,
    ): List<User> {
       return dgsQuery(dfe) {
-         val builder = BooleanBuilder()
-
+         val spec = emptySpecification<EUser>()
          username?.let {
-            builder.and(QEUser.eUser.username.equalsIgnoreCase(it))
+            spec.and(specEquals("username", it))
          }
-         repository.findAll(builder)
+         repository.findAll(spec)
       }
    }
 
@@ -54,10 +48,10 @@ class UserService {
       @InputArgument username: String,
       @InputArgument password: String,
    ): User {
-      if (repository.exists(QEUser.eUser.username.eq(username))) {
+      if (repository.exists(specEquals("username", username))) {
          throw DgsInvalidInputArgumentException("Username: $username already exists")
       }
-      
+
       return repository.save(
          EUser(
             username = username,
@@ -69,7 +63,7 @@ class UserService {
 
    @DgsMutation
    fun deleteUser(@InputArgument username: String): Boolean {
-      return delete(repository, QEUser.eUser.username, username)
+      return delete(repository, username)
    }
 
    @DgsMutation
@@ -115,7 +109,7 @@ class UserService {
 
          val customContext = DgsContext.getCustomContext<CustomContext>(env)
 
-         val trackedDays = trackedDayRepository.findAll(QETrackedDay.eTrackedDay.userId.`in`(userIds))
+         val trackedDays = trackedDayRepository.findAll(specInStrings("userId", userIds))
          customContext.entities.addAll(trackedDays)
 
          trackedDays.groupBy({ it.userId }, { it.toGqlType() })
