@@ -172,11 +172,14 @@ fun <R, G/*, E : GraphQLEntity<G>*/> dgsData(
 ): CompletableFuture<R> {
    val dataLoader = dfe.getDataLoader<String, R>(dataLoaderKey)
    val graphQLType = dfe.getSource<G>()
-   val graphQLTypeKey = keySupplier(graphQLType)
+   val graphQLTypeKey = graphQLType?.let { keySupplier(graphQLType) }
 
 //   val contextData = dfe.graphQlContext.get<List<E>>(DGS_CONTEXT_DATA)
-
-   return dataLoader.load(graphQLTypeKey)
+   return if (dataLoader != null && graphQLTypeKey != null) {
+      dataLoader.load(graphQLTypeKey)
+   }else {
+      CompletableFuture.supplyAsync { null }
+   }
 }
 
 /**

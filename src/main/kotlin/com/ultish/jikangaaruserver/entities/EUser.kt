@@ -2,6 +2,7 @@ package com.ultish.jikangaaruserver.entities
 
 import com.querydsl.core.annotations.QueryEntity
 import com.ultish.generated.types.User
+import jakarta.persistence.Entity
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
@@ -14,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document
  */
 @Document(value = "user")
 @QueryEntity
+@Entity
 data class EUser(
    @Id
    val id: String = ObjectId().toString(),

@@ -1,40 +1,57 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-   id("com.netflix.dgs.codegen") version "5.1.14"
-   id("org.springframework.boot") version "2.6.2"
-   id("io.spring.dependency-management") version "1.0.11.RELEASE"
-   id("org.jetbrains.kotlin.plugin.allopen") version "1.6.10"
-   kotlin("jvm") version "1.6.10"
-   kotlin("plugin.spring") version "1.6.10"
-   kotlin("kapt") version "1.6.10"
+   id("com.netflix.dgs.codegen") version "6.2.2"
+   id("org.springframework.boot") version "3.3.1"
+   id("io.spring.dependency-management") version "1.1.6"
+   id("org.jetbrains.kotlin.plugin.allopen") version "1.9.24"
+   kotlin("jvm") version "1.9.24"
+   kotlin("plugin.spring") version "1.9.24"
+   kotlin("kapt") version "1.9.24"
 }
 
 group = "com.ultish"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_14
+java.sourceCompatibility = JavaVersion.VERSION_17
+
+kapt {
+   correctErrorTypes = true
+}
 
 repositories {
    mavenCentral()
 }
-
+dependencyManagement {
+   imports {
+      // We need to define the DGS BOM as follows such that the
+      // io.spring.dependency-management plugin respects the versions expressed in the DGS BOM, e.g. graphql-java
+      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:latest.release")
+   }
+}
 dependencies {
-   implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:5.1.1"))
    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
 //   implementation("com.netflix.graphql.dgs:graphql-dgs-pagination")
-   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure:5.1.1")
+   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure")
 
-
-   implementation("com.querydsl:querydsl-mongodb:5.0.0")
-   implementation("com.querydsl:querydsl-apt:5.0.0")
+//// incompatible with spring boot 3x due to old mongo driver
+   implementation("com.querydsl:querydsl-mongodb:5.1.0")
+   implementation("com.querydsl:querydsl-apt:5.1.0:jakarta")
 
    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
    implementation("org.springframework.boot:spring-boot-starter-web")
    implementation("org.springframework.boot:spring-boot-starter")
    implementation("org.jetbrains.kotlin:kotlin-reflect")
-   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-   kapt("com.querydsl:querydsl-apt:5.0.0:general")
+   implementation("org.springframework.retry:spring-retry")
+
+   // not compat with old mongodb
+//   implementation( "org.springframework.boot:spring-boot-starter-actuator")
+//   implementation("io.micrometer:micrometer-registry-prometheus:1.9.1")
+
+   compileOnly("org.hibernate:hibernate-jpamodelgen:5.6.4.Final")
+
+   kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
 
    testImplementation("org.springframework.boot:spring-boot-starter-test")
    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
@@ -53,7 +70,7 @@ tasks.withType<com.netflix.graphql.dgs.codegen.gradle.GenerateJavaTask> {
    language = "kotlin"
 }
 
-// TODO doesn't work
+
 tasks.withType<JavaCompile> {
    options.compilerArgs.addAll(arrayOf("-parameters", "-Aquerydsl.prefix=P"))
 }
@@ -61,7 +78,7 @@ tasks.withType<JavaCompile> {
 tasks.withType<KotlinCompile> {
    kotlinOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=all")
-      jvmTarget = "14"
+      jvmTarget = "17"
    }
    dependsOn("generateJava")
 }
