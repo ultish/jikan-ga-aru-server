@@ -42,6 +42,9 @@ dependencies {
    implementation("org.springframework.boot:spring-boot-starter")
    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
+
+   implementation("org.springframework.retry:spring-retry")
+
    compileOnly("org.hibernate:hibernate-jpamodelgen:5.6.4.Final")
 //   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
