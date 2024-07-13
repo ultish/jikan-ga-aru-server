@@ -3,7 +3,7 @@ package com.ultish.jikangaaruserver.trackedTasks
 import com.netflix.graphql.dgs.*
 import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
-import com.querydsl.core.BooleanBuilder
+
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.ChargeCode
 import com.ultish.generated.types.TrackedDay
@@ -12,7 +12,6 @@ import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeRepository
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.*
 import com.ultish.jikangaaruserver.entities.ETrackedTask
-import com.ultish.jikangaaruserver.entities.QETrackedTask
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayRepository
 import graphql.schema.DataFetchingEnvironment
 import org.dataloader.MappedBatchLoaderWithContext
@@ -43,12 +42,11 @@ class TrackedTaskService {
       @InputArgument trackedDayId: String?,
    ): List<TrackedTask> {
       return dgsQuery(dfe) {
-         val builder = BooleanBuilder()
+         val spec = emptySpecification<ETrackedTask>()
          trackedDayId?.let {
-            builder.and(QETrackedTask.eTrackedTask.trackedDayId.eq(
-               trackedDayId))
+            spec.and(specById(trackedDayId))
          }
-         repository.findAll(builder)
+         repository.findAll(spec)
       }
    }
 
@@ -112,14 +110,16 @@ class TrackedTaskService {
 
    @DgsMutation
    fun deleteTrackedTask(@InputArgument id: String): Boolean {
-      return delete(repository, QETrackedTask.eTrackedTask.id, id)
+      return delete(repository, id)
    }
 
    //
    // Document References (relationships)
    // -------------------------------------------------------------------------
-   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
-      field = DgsConstants.TRACKEDTASK.TrackedDay)
+   @DgsData(
+      parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
+      field = DgsConstants.TRACKEDTASK.TrackedDay
+   )
    fun relatedUsers(dfe: DataFetchingEnvironment): CompletableFuture<TrackedDay> {
       return dgsData<TrackedDay, TrackedTask>(dfe, DATA_LOADER_FOR_TRACKED_DAY) {
          it.id
@@ -135,11 +135,15 @@ class TrackedTaskService {
 //      }
 //   }
 
-   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
-      field = DgsConstants.TRACKEDTASK.ChargeCodes)
+   @DgsData(
+      parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
+      field = DgsConstants.TRACKEDTASK.ChargeCodes
+   )
    fun relatedChargeCodes(dfe: DataFetchingEnvironment): CompletableFuture<List<ChargeCode>> {
-      return dgsData<List<ChargeCode>, TrackedTask>(dfe,
-         DATA_LOADER_FOR_CHARGE_CODES) { trackedTask ->
+      return dgsData<List<ChargeCode>, TrackedTask>(
+         dfe,
+         DATA_LOADER_FOR_CHARGE_CODES
+      ) { trackedTask ->
          trackedTask.id
       }
    }
@@ -163,7 +167,8 @@ class TrackedTaskService {
          }.associateBy({ it.id }, { it.trackedDayId })
 
          val trackedDayMap = trackedDayRepository.findAllById(
-            trackedTaskToTrackedDayMap.values.toList())
+            trackedTaskToTrackedDayMap.values.toList()
+         )
             .associateBy { it.id }
 
          // TODO not sure how these contexts are used in a federated graphQL scenario. I assume it probably wouldn't

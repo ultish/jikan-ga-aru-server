@@ -2,8 +2,6 @@ package com.ultish.jikangaaruserver.dataFetchers
 
 import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsBadRequestException
-import com.querydsl.core.types.Predicate
-import com.querydsl.core.types.dsl.StringPath
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.entities.GraphQLEntity
 import graphql.relay.*
@@ -13,14 +11,57 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.domain.Sort.Direction
+import org.springframework.data.jpa.domain.Specification
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.mongodb.repository.MongoRepository
-import org.springframework.data.querydsl.QuerydslPredicateExecutor
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 
 //const val DGS_CONTEXT_DATA = "dgsContextData"
+
+/**
+ * An empty Specification so we can build upon it
+ */
+inline fun <reified T> emptySpecification(): Specification<T> = Specification { _, _, _ -> null }
+
+inline fun <reified T> specById(id: String, idAttr: String = "id"): Specification<T> =
+   Specification { root, _, builder ->
+      builder.equal(root.get<String>(idAttr), id)
+   }
+
+inline fun <reified T> specEquals(attr: String, value: String): Specification<T> = Specification { root, _, builder ->
+   builder.equal(root.get<String>(attr), value)
+}
+
+inline fun <reified T, R> specEquals(attr: String, value: R): Specification<T> = Specification { root, _, builder ->
+   builder.equal(root.get<R>(attr), value)
+}
+
+/**
+ * A common Specification for a list of IDS, will split the list into chunks
+ */
+inline fun <reified T> specByIds(ids: Collection<String>): Specification<T> = specInStrings("id", ids)
+
+inline fun <reified T> specInStrings(attr: String, strings: Collection<String>): Specification<T> =
+   Specification { root, _, builder ->
+      val predicates = strings.chunked(10).map { chunk ->
+         root.get<String>(attr).`in`(chunk)
+//         val exp = builder.`in`(root.get<String>(attr))
+//         chunk.forEach { exp.value(it) }
+//         exp
+      }
+      builder.or(*predicates.toTypedArray())
+   }
+
+inline fun <reified T, R> specIn(attr: String, objs: Collection<R>): Specification<T> =
+   Specification { root, _, builder ->
+      val predicates = objs.chunked(10).map { chunk ->
+         root.get<R>(attr).`in`(chunk)
+      }
+      builder.or(*predicates.toTypedArray())
+   }
 
 /**
  * Utility to delete an Entity via a String-based key. (eg id, name etc).
@@ -31,17 +72,17 @@ import java.util.concurrent.CompletionStage
  * @param key the value to look for
  * @return successfully deleted the Entity or not
  */
-fun <G, E : GraphQLEntity<G>, R> delete(
-   repository: R, keyPath: StringPath, key: String,
+inline fun <G, reified E : GraphQLEntity<G>, R> delete(
+   repository: R, key: String, keyPath: String = "id"
 ): Boolean
-   where R : QuerydslPredicateExecutor<E>,
+   where R : JpaSpecificationExecutor<E>,
          R : MongoRepository<E, String> {
-   val toDelete = repository.findOne(keyPath.eq(key))
-   if (toDelete.isPresent) {
+
+   val toDelete = repository.findOne(specById(key, keyPath))
+   return if (toDelete.isPresent) {
       repository.delete(toDelete.get())
-      return true
-   }
-   return false
+      true
+   } else false
 }
 
 fun decode(cursor: String): Int {
@@ -73,15 +114,15 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
    sortDirection: Direction = Direction.ASC,
    after: String? = null,
    first: Int? = null,
-   predicate: Predicate? = null,
+   specification: Specification<E>? = null,
 ): Connection<G>
-   where R : QuerydslPredicateExecutor<E>,
+   where R : JpaSpecificationExecutor<E>,
          R : MongoRepository<E, String> {
 
    val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, sortDirection, after, first)
 
-   val page = if (predicate != null) {
-      repository.findAll(predicate, pagable)
+   val page = if (specification != null) {
+      repository.findAll(specification, pagable)
    } else {
       repository.findAll(pagable)
    }
@@ -172,11 +213,14 @@ fun <R, G/*, E : GraphQLEntity<G>*/> dgsData(
 ): CompletableFuture<R> {
    val dataLoader = dfe.getDataLoader<String, R>(dataLoaderKey)
    val graphQLType = dfe.getSource<G>()
-   val graphQLTypeKey = keySupplier(graphQLType)
+   val graphQLTypeKey = graphQLType?.let { keySupplier(graphQLType) }
 
 //   val contextData = dfe.graphQlContext.get<List<E>>(DGS_CONTEXT_DATA)
-
-   return dataLoader.load(graphQLTypeKey)
+   return if (dataLoader != null && graphQLTypeKey != null) {
+      dataLoader.load(graphQLTypeKey)
+   }else {
+      CompletableFuture.supplyAsync { null }
+   }
 }
 
 /**
@@ -225,12 +269,12 @@ inline fun <V, reified E : GraphQLEntity<*>> getEntitiesFromEnv(
 
 }
 
-fun <G, E : GraphQLEntity<G>, R> future(repository: R, predicate: Predicate)
+fun <G, E : GraphQLEntity<G>, R> future(repository: R, specification: Specification<E>)
    : CompletionStage<List<G>>
-   where R : QuerydslPredicateExecutor<E>,
+   where R : JpaSpecificationExecutor<E>,
          R : MongoRepository<E, String> {
    return CompletableFuture.supplyAsync {
-      repository.findAll(predicate)
+      repository.findAll(specification)
          .map {
             it.toGqlType()
          }

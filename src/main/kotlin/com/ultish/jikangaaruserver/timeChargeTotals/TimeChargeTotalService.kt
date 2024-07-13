@@ -2,7 +2,6 @@ package com.ultish.jikangaaruserver.timeChargeTotals
 
 import com.netflix.graphql.dgs.*
 import com.netflix.graphql.dgs.context.DgsContext
-import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.ChargeCode
 import com.ultish.generated.types.TimeChargeTotal
@@ -10,14 +9,8 @@ import com.ultish.generated.types.TrackedDay
 import com.ultish.generated.types.WeekOfYear
 import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeService
 import com.ultish.jikangaaruserver.contexts.CustomContext
-import com.ultish.jikangaaruserver.dataFetchers.dgsData
-import com.ultish.jikangaaruserver.dataFetchers.dgsQuery
-import com.ultish.jikangaaruserver.dataFetchers.getEntitiesFromEnv
-import com.ultish.jikangaaruserver.dataFetchers.getUser
-import com.ultish.jikangaaruserver.entities.ETimeChargeTotal
-import com.ultish.jikangaaruserver.entities.QETimeCharge
-import com.ultish.jikangaaruserver.entities.QETimeChargeTotal
-import com.ultish.jikangaaruserver.entities.QETrackedDay
+import com.ultish.jikangaaruserver.dataFetchers.*
+import com.ultish.jikangaaruserver.entities.*
 import com.ultish.jikangaaruserver.timeCharges.TimeChargeService
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayService
 import graphql.schema.DataFetchingEnvironment
@@ -28,10 +21,11 @@ import reactor.core.publisher.ConnectableFlux
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 import java.util.concurrent.CompletableFuture
-import javax.annotation.PostConstruct
+
+//import javax.annotation.PostConstruct
 
 @DgsComponent
-class TimeChargeTotalService {
+class TimeChargeTotalService() {
 
    companion object {
       const val BLOCK_SIZE = 6
@@ -54,14 +48,22 @@ class TimeChargeTotalService {
    @Autowired
    lateinit var chargeCodeService: ChargeCodeService
 
-   @PostConstruct
-   fun initialise() {
+   init {
       val publisher = Flux.create<ETimeChargeTotal> { emitter ->
          timeChargeTotalStream = emitter
       }
       timeChargeTotalPublisher = publisher.publish()
       timeChargeTotalPublisher.connect()
    }
+
+//   @PostConstruct
+//   fun nope() {
+//      val publisher = Flux.create<ETimeChargeTotal> { emitter ->
+//         timeChargeTotalStream = emitter
+//      }
+//      timeChargeTotalPublisher = publisher.publish()
+//      timeChargeTotalPublisher.connect()
+//   }
 
    @DgsSubscription
    fun timeChargeTotalChanged(@InputArgument userId: String): Publisher<TimeChargeTotal> {
@@ -79,23 +81,27 @@ class TimeChargeTotalService {
    ): List<TimeChargeTotal> {
 
       val userId = getUser(dfe)
-      val builder = BooleanBuilder().and(QETrackedDay.eTrackedDay.userId.eq(userId))
+      val spec = specEquals<ETimeChargeTotal>("userId", userId)
+//      val builder = BooleanBuilder().and(QETrackedDay.eTrackedDay.userId.eq(userId))
 
       weekOfYear?.let {
-         val dayBuilder = BooleanBuilder()
-            .and(QETrackedDay.eTrackedDay.year.eq(weekOfYear.year))
+         val dayBuilder = specEquals<ETrackedDay, Int>("year", weekOfYear.year)
+//         val dayBuilder = BooleanBuilder()
+//            .and(QETrackedDay.eTrackedDay.year.eq(weekOfYear.year))
          weekOfYear.week?.let {
-            dayBuilder.and(QETrackedDay.eTrackedDay.week.eq(it))
+            dayBuilder.and(specEquals("week", it))
+//            dayBuilder.and(QETrackedDay.eTrackedDay.week.eq(it))
          }
          val trackedDayIds = trackedDayService.repository.findAll(dayBuilder)
             .map { trackedDay ->
                trackedDay.id
             }
-         builder.and(QETimeChargeTotal.eTimeChargeTotal.trackedDayId.`in`(trackedDayIds))
+         spec.and(specInStrings("trackedDayId", trackedDayIds))
+//         spec.and(QETimeChargeTotal.eTimeChargeTotal.trackedDayId.`in`(trackedDayIds))
       }
 
       return dgsQuery(dfe) {
-         repository.findAll(builder)
+         repository.findAll(spec)
       }
    }
 
@@ -114,9 +120,14 @@ class TimeChargeTotalService {
       chargeCodeId: String,
       userId: String,
    ) {
-      val timeChargesForChargeCodeThatDay = timeChargeService.repository.findAll(BooleanBuilder()
-         .and(QETimeCharge.eTimeCharge.trackedDayId.eq(trackedDayId))
-         .and(QETimeCharge.eTimeCharge.chargeCodeId.eq(chargeCodeId)))
+      val timeChargesForChargeCodeThatDay = timeChargeService.repository.findAll(
+         specEquals<ETimeCharge>("trackedDayId", trackedDayId)
+            .and(specEquals("chargeCodeId", chargeCodeId))
+//
+//         BooleanBuilder()
+//            .and(QETimeCharge.eTimeCharge.trackedDayId.eq(trackedDayId))
+//            .and(QETimeCharge.eTimeCharge.chargeCodeId.eq(chargeCodeId))
+      )
 
       val totalTime = timeChargesForChargeCodeThatDay.fold(0.0) { acc, timeCharge ->
          val time =
@@ -128,12 +139,14 @@ class TimeChargeTotalService {
          it.copy(
             value = totalTime
          )
-      }.orElse(ETimeChargeTotal(
-         value = totalTime,
-         trackedDayId = trackedDayId,
-         chargeCodeId = chargeCodeId,
-         userId = userId,
-      ))
+      }.orElse(
+         ETimeChargeTotal(
+            value = totalTime,
+            trackedDayId = trackedDayId,
+            chargeCodeId = chargeCodeId,
+            userId = userId,
+         )
+      )
 
       // we could delete timeChargeTotals if Value == 0, ignoring for now
 
@@ -145,16 +158,20 @@ class TimeChargeTotalService {
    //
    // Document References (relationships)
    // -------------------------------------------------------------------------
-   @DgsData(parentType = DgsConstants.TIMECHARGETOTAL.TYPE_NAME,
-      field = DgsConstants.TIMECHARGETOTAL.ChargeCode)
+   @DgsData(
+      parentType = DgsConstants.TIMECHARGETOTAL.TYPE_NAME,
+      field = DgsConstants.TIMECHARGETOTAL.ChargeCode
+   )
    fun relatedChargeCode(dfe: DataFetchingEnvironment): CompletableFuture<ChargeCode> {
       return dgsData<ChargeCode, TimeChargeTotal>(dfe, DATA_LOADER_FOR_CHARGE_CODE) {
          it.id
       }
    }
 
-   @DgsData(parentType = DgsConstants.TIMECHARGETOTAL.TYPE_NAME,
-      field = DgsConstants.TIMECHARGETOTAL.TrackedDay)
+   @DgsData(
+      parentType = DgsConstants.TIMECHARGETOTAL.TYPE_NAME,
+      field = DgsConstants.TIMECHARGETOTAL.TrackedDay
+   )
    fun relatedTrackedDay(dfe: DataFetchingEnvironment): CompletableFuture<TrackedDay> {
       return dgsData<TrackedDay, TimeChargeTotal>(dfe, DATA_LOADER_FOR_TRACKED_DAY) {
          it.id
@@ -178,7 +195,8 @@ class TimeChargeTotalService {
                }
 
             val chargeCodeMap = chargeCodeService.repository.findAllById(
-               timeChargeTotalToChargeCodeMap.values.toList())
+               timeChargeTotalToChargeCodeMap.values.toList()
+            )
                .associateBy { it.id }
 
             // TODO not sure how these contexts are used in a federated graphQL scenario. I assume it probably wouldn't
@@ -209,7 +227,8 @@ class TimeChargeTotalService {
                }
 
             val trackedDayMap = trackedDayService.repository.findAllById(
-               timeChargeTotalToTrackedDayMap.values.toList())
+               timeChargeTotalToTrackedDayMap.values.toList()
+            )
                .associateBy { it.id }
 
             // TODO not sure how these contexts are used in a federated graphQL scenario. I assume it probably wouldn't
