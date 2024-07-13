@@ -5,6 +5,37 @@ Graphiql: http://localhost:8080/graphiql
 
 ## Learning
 
+### Kubernetes
+- reuse docker daemon from minikube
+    ```zsh
+    eval $(minikube docker-env)
+    ```
+- build docker image
+- tag with latest
+  ```zsh
+  docker tag jikan-ga-aru-server:0.0.1-SNAPSHOT jikan-ga-aru-server
+  ```
+- generate kube deployment
+  ```zsh
+  kubectl create deployment jikan-ga-aru-server --image=jikan-ga-aru-server --dry-run -o=yaml > deployment.yaml
+  echo --- >> deployment.yaml
+  kubectl create service clusterip jikan-ga-aru-server --tcp=8080:8080 --dry-run -o=yaml >> deployment.yaml
+  ```
+  Note: i modified the tag to include :0.0.1-SNAPSHOT but i did not tag latest either
+  Note: i modified the deployment.yaml to set imagePullPolicy: Never
+- deploy to kubernetes
+  ```zsh
+  kubectl apply -f deployment.yaml
+  ```
+- port forward
+  ```zsh
+  kubectl port-forward svc/jikan-ga-aru-server 8080:8080
+  ```
+- unset docker daeomon
+    ```zsh
+    eval $(minikube docker-env -u)
+    ```
+  
 ### DataLoaders and Custom Contexts
 
 A custom context is passed from parent to child(s) which contains a mutable list of Entities that are loaded within a
