@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: jikan-ga-aru-server
+  name: jikan-ga-aru-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jikan-ga-aru-server
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: jikan-ga-aru-server
+    spec:
+      containers:
+      - image: jikan-ga-aru-server:0.0.1-SNAPSHOT
+        name: jikan-ga-aru-server
+        imagePullPolicy: Never
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: jikan-ga-aru-server
+  name: jikan-ga-aru-server
+spec:
+  ports:
+  - name: 8080-8080
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: jikan-ga-aru-server
+  type: ClusterIP
+status:
+  loadBalancer: {}

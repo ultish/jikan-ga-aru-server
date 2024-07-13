@@ -21,6 +21,7 @@ import com.ultish.jikangaaruserver.entities.QETrackedDay
 import com.ultish.jikangaaruserver.timeCharges.TimeChargeService
 import com.ultish.jikangaaruserver.trackedDays.TrackedDayService
 import graphql.schema.DataFetchingEnvironment
+import jakarta.annotation.PostConstruct
 import org.dataloader.MappedBatchLoaderWithContext
 import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,7 +29,6 @@ import reactor.core.publisher.ConnectableFlux
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 import java.util.concurrent.CompletableFuture
-import javax.annotation.PostConstruct
 
 @DgsComponent
 class TimeChargeTotalService {
