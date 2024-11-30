@@ -25,16 +25,17 @@ dependencyManagement {
    imports {
       // We need to define the DGS BOM as follows such that the
       // io.spring.dependency-management plugin respects the versions expressed in the DGS BOM, e.g. graphql-java
-      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:latest.release")
+      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:8.7.1")
    }
 }
 dependencies {
    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
-//   implementation("com.netflix.graphql.dgs:graphql-dgs-pagination")
    implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure")
 
-//// incompatible with spring boot 3x due to old mongo driver
-   implementation("com.querydsl:querydsl-mongodb:5.1.0")
+   // Use a newer version of QueryDSL that's compatible with Spring Boot 3.x
+   implementation("com.querydsl:querydsl-mongodb:5.1.0") {
+       exclude(group = "org.mongodb")
+   }
    implementation("com.querydsl:querydsl-apt:5.1.0:jakarta")
 
    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")

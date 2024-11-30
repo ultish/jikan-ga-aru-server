@@ -97,9 +97,13 @@ fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
       DefaultEdge(gqlType, DefaultConnectionCursor(cursor))
    }
 
+
+   val firstCursor = if (edges.isNotEmpty()) edges.first().cursor else null
+   val lastCursor = if (edges.isNotEmpty()) edges.last().cursor else null
+
    val pageInfo = DefaultPageInfo(
-      edges.first().cursor,
-      edges.last().cursor,
+      firstCursor,
+      lastCursor,
       page.hasPrevious(),
       page.hasNext()
    )

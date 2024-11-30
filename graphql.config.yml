@@ -1,0 +1,6 @@
+
+documents: '**/*.graphql'
+schema:
+  - http://localhost:8080/graphql:
+      headers:
+        user-id: 61cd4dfa37595c6ebaddd54d
