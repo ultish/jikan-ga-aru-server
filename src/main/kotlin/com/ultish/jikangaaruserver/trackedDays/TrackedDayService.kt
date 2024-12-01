@@ -92,7 +92,7 @@ class TrackedDayService {
    fun createTrackedDay(
       dfe: DataFetchingEnvironment,
       @InputArgument date: Double, // not confusing at all, graphql's Float is passed in as a Double
-      @InputArgument mode: DayMode?,
+      @InputArgument mode: String?,
    ): TrackedDay {
       val userId = getUser(dfe)
 
@@ -114,12 +114,13 @@ class TrackedDayService {
       val week = cal.get(Calendar.WEEK_OF_YEAR)
       val year = cal.get(Calendar.YEAR)
 
+      val dayMode = if (mode != null) DayMode.valueOf(mode) else DayMode.NORMAL
       return dgsMutate(dfe) {
          repository.save(ETrackedDay(
             date = d,
             week = week,
             year = year,
-            mode = mode ?: DayMode.NORMAL,
+            mode = dayMode,
             userId = userId,
          ))
       }
