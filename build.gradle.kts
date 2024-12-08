@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
    id("com.netflix.dgs.codegen") version "6.2.2"
-   id("org.springframework.boot") version "3.3.1"
+   id("org.springframework.boot") version "3.4.0"
    id("io.spring.dependency-management") version "1.1.6"
    id("org.jetbrains.kotlin.plugin.allopen") version "1.9.24"
    kotlin("jvm") version "1.9.24"
@@ -13,6 +13,9 @@ plugins {
 group = "com.ultish"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
+
+
+extra["netflixDgsVersion"] = "9.2.0"
 
 kapt {
    correctErrorTypes = true
@@ -25,12 +28,13 @@ dependencyManagement {
    imports {
       // We need to define the DGS BOM as follows such that the
       // io.spring.dependency-management plugin respects the versions expressed in the DGS BOM, e.g. graphql-java
-      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:8.7.1")
+//      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:8.7.1")
+      mavenBom("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:${property("netflixDgsVersion")}")
    }
 }
 dependencies {
-   implementation("com.netflix.graphql.dgs:graphql-dgs-spring-boot-starter")
-   implementation("com.netflix.graphql.dgs:graphql-dgs-subscriptions-websockets-autoconfigure")
+   implementation("com.netflix.graphql.dgs:graphql-dgs-spring-graphql-starter")
+   implementation("org.springframework.boot:spring-boot-starter-websocket")
 
    // Use a newer version of QueryDSL that's compatible with Spring Boot 3.x
    implementation("com.querydsl:querydsl-mongodb:5.1.0") {
@@ -42,7 +46,11 @@ dependencies {
    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
    implementation("org.springframework.boot:spring-boot-starter-web")
    implementation("org.springframework.boot:spring-boot-starter")
+
+   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
    implementation("org.jetbrains.kotlin:kotlin-reflect")
+   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+
 
    implementation("org.springframework.retry:spring-retry")
 
@@ -56,6 +64,8 @@ dependencies {
 
    testImplementation("org.springframework.boot:spring-boot-starter-test")
    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+
+   testImplementation("com.netflix.graphql.dgs:graphql-dgs-spring-graphql-starter-test")
 }
 
 allOpen {

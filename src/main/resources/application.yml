@@ -11,6 +11,9 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/jikan-ga-aru
       auto-index-creation: true
+  graphql:
+    websocket:
+      path: /graphql
 
 logging:
   level:
