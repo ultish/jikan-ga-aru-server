@@ -4,6 +4,8 @@ extend type Query  {
         after: String,
         first: Int
     ): TrackedDayConnection
+
+    trackedDaysForMonth(month: Int): [TrackedDay!]
 }
 
 extend type Mutation {
