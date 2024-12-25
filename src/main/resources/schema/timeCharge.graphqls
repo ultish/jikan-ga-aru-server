@@ -2,21 +2,21 @@ extend type Query {
     timeCharges(trackedDayId: String, timeSlot: Int, chargeCodeId: ID): [TimeCharge!]
 }
 
-extend type Mutation {
-    createTimeCharge(
-        timeSlot: Int!,
-        chargeCodeId: ID!,
-        trackedDayId: ID!,
-        chargeCodeAppearance: Int
-        totalChargeCodesForSlot: Int
-    ): TimeCharge!
-
-    updateTimeCharge(
-        id: ID!,
-        chargeCodeAppearance: Int,
-        totalChargeCodesForSlot: Int
-    ): TimeCharge!
-}
+#extend type Mutation {
+#    createTimeCharge(
+#        timeSlot: Int!,
+#        chargeCodeId: ID!,
+#        trackedDayId: ID!,
+#        chargeCodeAppearance: Int
+#        totalChargeCodesForSlot: Int
+#    ): TimeCharge!
+#
+#    updateTimeCharge(
+#        id: ID!,
+#        chargeCodeAppearance: Int,
+#        totalChargeCodesForSlot: Int
+#    ): TimeCharge!
+#}
 
 type TimeCharge {
     id: ID!

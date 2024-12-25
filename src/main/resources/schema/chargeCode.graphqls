@@ -3,8 +3,8 @@ extend type Query {
 }
 
 extend type Mutation {
-    createChargeCode(name: String!, code: String!, description: String, expired: Boolean=false): ChargeCode
-    updateChargeCode(id: ID!, name: String, code: String, description: String, expired: Boolean): ChargeCode
+    createChargeCode(name: String!, code: String!, description: String, expired: Boolean=false, group: String, sortOrder: Int): ChargeCode
+    updateChargeCode(id: ID!, name: String, code: String, description: String, expired: Boolean, group: String, sortOrder: Int): ChargeCode
     deleteChargeCode(id: ID!): Boolean
 }
 
@@ -14,4 +14,6 @@ type ChargeCode {
     code: String!
     description: String
     expired: Boolean!
+    group: String
+    sortOrder: Int
 }
