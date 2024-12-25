@@ -1,11 +1,15 @@
 extend type Query  {
-    trackedDays(id: ID): [TrackedDay!]
+    trackedDay(id: ID): TrackedDay
     trackedDaysPaginated(
         after: String,
         first: Int
     ): TrackedDayConnection
 
-    trackedDaysForMonth(month: Int): [TrackedDay!]
+    trackedDaysForMonthYear(month: Int, year: Int): [TrackedDay!]
+}
+
+extend type Subscription {
+    trackedDayChanged(month: Int, year: Int): TrackedDay
 }
 
 extend type Mutation {
@@ -13,6 +17,7 @@ extend type Mutation {
     deleteTrackedDay(id: ID!): Boolean
     updateTrackedDay(id: ID!, mode: DayMode, date: Float, trackedTaskIds: [String!]): TrackedDay
 }
+
 
 # each tracked day will have a max of 240 timeslots (if you work 24hrs!)
 type TrackedDay {

@@ -32,25 +32,34 @@ import java.util.concurrent.CompletionStage
  * @return successfully deleted the Entity or not
  */
 fun <G, E : GraphQLEntity<G>, R> delete(
-   repository: R, keyPath: StringPath, key: String,
+    repository: R, keyPath: StringPath, key: String,
 ): Boolean
-   where R : QuerydslPredicateExecutor<E>,
-         R : MongoRepository<E, String> {
-   val toDelete = repository.findOne(keyPath.eq(key))
-   if (toDelete.isPresent) {
-      repository.delete(toDelete.get())
-      return true
-   }
-   return false
+        where R : QuerydslPredicateExecutor<E>,
+              R : MongoRepository<E, String> {
+    val toDelete = repository.findOne(keyPath.eq(key))
+    if (toDelete.isPresent) {
+        repository.delete(toDelete.get())
+        return true
+    }
+    return false
 }
 
 fun decode(cursor: String): Int {
-   return Integer.parseInt(String(Base64.getDecoder().decode(cursor), StandardCharsets.UTF_8))
+    return Integer.parseInt(
+        String(
+            Base64.getDecoder()
+                .decode(cursor), StandardCharsets.UTF_8
+        )
+    )
 }
 
 fun createCursor(index: Int, pageNumber: Int, size: Int): String {
-   val realIndex = pageNumber * size + index
-   return Base64.getEncoder().encodeToString(realIndex.toString().toByteArray(StandardCharsets.UTF_8))
+    val realIndex = pageNumber * size + index
+    return Base64.getEncoder()
+        .encodeToString(
+            realIndex.toString()
+                .toByteArray(StandardCharsets.UTF_8)
+        )
 }
 
 /**
@@ -67,137 +76,142 @@ fun createCursor(index: Int, pageNumber: Int, size: Int): String {
  * consistently
  */
 fun <G, E : GraphQLEntity<G>, R> fetchPaginated(
-   dfe: DataFetchingEnvironment,
-   repository: R,
-   sortKey: String,
-   sortDirection: Direction = Direction.ASC,
-   after: String? = null,
-   first: Int? = null,
-   predicate: Predicate? = null,
+    dfe: DataFetchingEnvironment,
+    repository: R,
+    sortKey: String,
+    sortDirection: Direction = Direction.ASC,
+    after: String? = null,
+    first: Int? = null,
+    predicate: Predicate? = null,
 ): Connection<G>
-   where R : QuerydslPredicateExecutor<E>,
-         R : MongoRepository<E, String> {
+        where R : QuerydslPredicateExecutor<E>,
+              R : MongoRepository<E, String> {
 
-   val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, sortDirection, after, first)
+    val (pagable, pageNumber, itemsPerPage) = createPageable(sortKey, sortDirection, after, first)
 
-   val page = if (predicate != null) {
-      repository.findAll(predicate, pagable)
-   } else {
-      repository.findAll(pagable)
-   }
+    val page = if (predicate != null) {
+        repository.findAll(predicate, pagable)
+    } else {
+        repository.findAll(pagable)
+    }
 
-   // load the entity data into the DGS context for later use if necessary (eg dataLoaders)
+    // load the entity data into the DGS context for later use if necessary (eg dataLoaders)
 //   dfe.graphQlContext.put(DGS_CONTEXT_DATA, page.content)
-   val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
-   customContext.entities.addAll(page.content)
+    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
+    customContext.entities.addAll(page.content)
 
-   val edges = page.mapIndexed { index, it ->
-      val gqlType = it.toGqlType()
-      val cursor = createCursor(index, pageNumber, itemsPerPage)
-      DefaultEdge(gqlType, DefaultConnectionCursor(cursor))
-   }
+    val edges = page.mapIndexed { index, it ->
+        val gqlType = it.toGqlType()
+        val cursor = createCursor(index, pageNumber, itemsPerPage)
+        DefaultEdge(gqlType, DefaultConnectionCursor(cursor))
+    }
 
 
-   val firstCursor = if (edges.isNotEmpty()) edges.first().cursor else null
-   val lastCursor = if (edges.isNotEmpty()) edges.last().cursor else null
+    val firstCursor = if (edges.isNotEmpty()) edges.first().cursor else null
+    val lastCursor = if (edges.isNotEmpty()) edges.last().cursor else null
 
-   val pageInfo = DefaultPageInfo(
-      firstCursor,
-      lastCursor,
-      page.hasPrevious(),
-      page.hasNext()
-   )
+    val pageInfo = DefaultPageInfo(
+        firstCursor,
+        lastCursor,
+        page.hasPrevious(),
+        page.hasNext()
+    )
 
-   return DefaultConnection(edges, pageInfo)
+    return DefaultConnection(edges, pageInfo)
 }
 
 fun createPageable(
-   sortKey: String,
-   sortDirection: Sort.Direction = Sort.Direction.ASC,
-   after: String? = null,
-   first: Int? = null,
+    sortKey: String,
+    sortDirection: Sort.Direction = Sort.Direction.ASC,
+    after: String? = null,
+    first: Int? = null,
 ): Triple<Pageable, Int, Int> {
-   val index = after?.let { decode(it) } ?: -1
-   val itemsPerPage = first ?: 10;
-   val pageNumber = (index + 1) / itemsPerPage;
+    val index = after?.let { decode(it) } ?: -1
+    val itemsPerPage = first ?: 10;
+    val pageNumber = (index + 1) / itemsPerPage;
 
-   val sorter = Sort.by(sortDirection, sortKey);
+    val sorter = Sort.by(sortDirection, sortKey);
 
-   return Triple(
-      PageRequest.of(pageNumber, itemsPerPage, sorter),
-      pageNumber,
-      itemsPerPage
-   )
+    return Triple(
+        PageRequest.of(pageNumber, itemsPerPage, sorter),
+        pageNumber,
+        itemsPerPage
+    )
 }
 
 fun getUser(dfe: DataFetchingEnvironment): String {
-   val request = DgsContext.getRequestData(dfe)
-   return request?.headers?.getFirst("user-id") ?: throw DgsBadRequestException("user-id not provided in headers")
+    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
+
+    // now using the userId from CustomContext instead of just the headers as
+    // websocket connection doesn't have userid in the header
+    return customContext.userId ?: throw DgsBadRequestException("user-id not provided")
+//   val request = DgsContext.getRequestData(dfe)
+//   return request?.headers?.getFirst("user-id") ?: throw DgsBadRequestException("user-id not provided in headers")
 }
 
 fun <G, E : GraphQLEntity<G>> dgsQuery(
-   dfe: DataFetchingEnvironment,
-   entities: () -> Iterable<E>,
+    dfe: DataFetchingEnvironment,
+    entities: () -> Iterable<E>,
 ): List<G> {
 
-   // LEARN: can fetch request headers like this. Can use it to request the x-token for user auth
-   val request = DgsContext.getRequestData(dfe)
-   val userId = request?.headers?.getFirst("user-id")
-   println("request from ${userId}")
+    // LEARN: can fetch request headers like this. Can use it to request the x-token for user auth
+    val request = DgsContext.getRequestData(dfe)
+    val userId = request?.headers?.getFirst("user-id")
+    println("request from ${userId}")
 
-   val entitiesToAdd = entities()
-   // push the entities into the graphql context
-   val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
-   customContext.entities.addAll(entitiesToAdd)
+    val entitiesToAdd = entities()
+    // push the entities into the graphql context
+    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
+    customContext.entities.addAll(entitiesToAdd)
 
-   return entitiesToAdd.map { it.toGqlType() }
+    return entitiesToAdd.map { it.toGqlType() }
 }
 
 fun <G, E : GraphQLEntity<G>> dgsMutate(dfe: DataFetchingEnvironment, entity: () -> E): G {
-   val request = DgsContext.getRequestData(dfe)
-   val userId = request?.headers?.getFirst("user-id")
-   println("create request from ${userId}")
+    val request = DgsContext.getRequestData(dfe)
+    val userId = request?.headers?.getFirst("user-id")
+    println("create request from ${userId}")
 
-   val e = entity()
+    val e = entity()
 
-   val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
-   customContext.entities.add(e)
+    val customContext = DgsContext.getCustomContext<CustomContext>(dfe)
+    customContext.entities.add(e)
 
-   return e.toGqlType()
+    return e.toGqlType()
 }
 
 /**
  * Helper function for @DgsData annotated document reference functions (functions that will use DgsDataLoaders)
  */
 fun <R, G/*, E : GraphQLEntity<G>*/> dgsData(
-   dfe: DataFetchingEnvironment,
-   dataLoaderKey: String,
-   keySupplier: (g: G) -> String,
+    dfe: DataFetchingEnvironment,
+    dataLoaderKey: String,
+    keySupplier: (g: G) -> String,
 ): CompletableFuture<R> {
-   val dataLoader = dfe.getDataLoader<String, R>(dataLoaderKey)
-   val graphQLType = dfe.getSource<G>()
-   val graphQLTypeKey = graphQLType?.let { keySupplier(graphQLType) }
+    val dataLoader = dfe.getDataLoader<String, R>(dataLoaderKey)
+    val graphQLType = dfe.getSource<G>()
+    val graphQLTypeKey = graphQLType?.let { keySupplier(graphQLType) }
 
 //   val contextData = dfe.graphQlContext.get<List<E>>(DGS_CONTEXT_DATA)
-   return if (dataLoader != null && graphQLTypeKey != null) {
-      dataLoader.load(graphQLTypeKey)
-   }else {
-      CompletableFuture.supplyAsync { null }
-   }
+    return if (dataLoader != null && graphQLTypeKey != null) {
+        dataLoader.load(graphQLTypeKey)
+    } else {
+        CompletableFuture.supplyAsync { null }
+    }
 }
 
 /**
  * Helper function to pull out Map from DSG context
  */
 inline fun <V, reified E : GraphQLEntity<*>> contextToMap(
-   context: BatchLoaderEnvironment,
-   getValue: (entity: E?) -> V?,
+    context: BatchLoaderEnvironment,
+    getValue: (entity: E?) -> V?,
 ): Map<String, V?> {
-   return context.keyContexts.entries.associate { entry ->
-      // LEARN: as? is kotlin's safe-cast operator which returns null instead of ClassCastException
-      val value = if (entry.value is E) getValue(entry.value as E) else null
-      Pair(entry.key.toString(), value)
-   }
+    return context.keyContexts.entries.associate { entry ->
+        // LEARN: as? is kotlin's safe-cast operator which returns null instead of ClassCastException
+        val value = if (entry.value is E) getValue(entry.value as E) else null
+        Pair(entry.key.toString(), value)
+    }
 }
 
 //fun <R, E : GraphQLEntity<*>> dgsDataLoader(
@@ -217,29 +231,30 @@ inline fun <V, reified E : GraphQLEntity<*>> contextToMap(
 //}
 
 inline fun <V, reified E : GraphQLEntity<*>> getEntitiesFromEnv(
-   environment: BatchLoaderEnvironment,
-   ids: Collection<String>,
-   getValue: (it: E) -> V,
+    environment: BatchLoaderEnvironment,
+    ids: Collection<String>,
+    getValue: (it: E) -> V,
 ): Map<String, V> {
-   val customContext = DgsContext.getCustomContext<CustomContext>(environment)
-   return customContext.entities.mapNotNull {
-      if (it is E && ids.contains(it.id())) {
-         it
-      } else {
-         null
-      }
-   }.associateBy({ it.id() }, { getValue(it) })
+    val customContext = DgsContext.getCustomContext<CustomContext>(environment)
+    return customContext.entities.mapNotNull {
+        if (it is E && ids.contains(it.id())) {
+            it
+        } else {
+            null
+        }
+    }
+        .associateBy({ it.id() }, { getValue(it) })
 
 }
 
 fun <G, E : GraphQLEntity<G>, R> future(repository: R, predicate: Predicate)
-   : CompletionStage<List<G>>
-   where R : QuerydslPredicateExecutor<E>,
-         R : MongoRepository<E, String> {
-   return CompletableFuture.supplyAsync {
-      repository.findAll(predicate)
-         .map {
-            it.toGqlType()
-         }
-   }
+        : CompletionStage<List<G>>
+        where R : QuerydslPredicateExecutor<E>,
+              R : MongoRepository<E, String> {
+    return CompletableFuture.supplyAsync {
+        repository.findAll(predicate)
+            .map {
+                it.toGqlType()
+            }
+    }
 }
