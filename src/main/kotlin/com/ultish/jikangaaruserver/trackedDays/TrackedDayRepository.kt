@@ -17,11 +17,12 @@ interface TrackedDayRepository : MongoRepository<ETrackedDay, String>,
            ${'$'}expr: { 
               ${'$'}and: [
                  { ${'$'}eq: [{ ${'$'}month: '${'$'}date' }, :#{#month}] },
-                 { ${'$'}eq: [{ ${'$'}year: '${'$'}date' }, :#{#year}] }
+                 { ${'$'}eq: [{ ${'$'}year: '${'$'}date' }, :#{#year}] },
+                 { ${'$'}eq: ['${'$'}userId', :#{#userId}] }
               ]
            }
         }"""
     )
-    fun findByMonthAndYear(month: Int, year: Int): List<ETrackedDay>
+    fun findByMonthAndYear(month: Int, year: Int, userId: String): List<ETrackedDay>
 
 }

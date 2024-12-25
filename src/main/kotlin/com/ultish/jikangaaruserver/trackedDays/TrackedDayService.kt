@@ -4,7 +4,6 @@ import com.netflix.graphql.dgs.*
 import com.netflix.graphql.dgs.context.DgsContext
 import com.netflix.graphql.dgs.exceptions.DgsInvalidInputArgumentException
 import com.querydsl.core.BooleanBuilder
-import com.querydsl.core.types.dsl.Expressions
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.*
 import com.ultish.jikangaaruserver.contexts.CustomContext
@@ -16,10 +15,16 @@ import com.ultish.jikangaaruserver.trackedTasks.TrackedTaskRepository
 import com.ultish.jikangaaruserver.users.UserRepository
 import graphql.relay.Connection
 import graphql.schema.DataFetchingEnvironment
+import jakarta.annotation.PostConstruct
 import org.dataloader.MappedBatchLoaderWithContext
+import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.repository.findByIdOrNull
+import reactor.core.publisher.ConnectableFlux
+import reactor.core.publisher.Flux
+import reactor.core.publisher.FluxSink
+import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -48,15 +53,45 @@ class TrackedDayService {
     @Autowired
     lateinit var timeChargeTotalRepository: TimeChargeTotalRepository
 
+    private lateinit var trackedDayStream: FluxSink<ETrackedDay>
+    private lateinit var trackedDayPublisher: ConnectableFlux<ETrackedDay>
 
-    @Autowired
-    private lateinit var mongoTemplate: MongoTemplate
+
+    @PostConstruct
+    fun initialise() {
+        val publisher = Flux.create<ETrackedDay> { emitter ->
+            trackedDayStream = emitter
+        }
+        trackedDayPublisher = publisher.publish()
+        trackedDayPublisher.connect()
+    }
+
+    @DgsSubscription
+    fun trackedDayChanged(
+        dfe: DataFetchingEnvironment,
+        @InputArgument month: Int,
+        @InputArgument year: Int
+    ): Publisher<TrackedDay> {
+        val userId = getUser(dfe)
+        return trackedDayPublisher.filter {
+            // Convert java.util.Date to LocalDate
+            val localDate = it.date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+
+            // Extract month and year
+            val dMonth = localDate.monthValue // 1 to 12
+            val dYear = localDate.year
+            it.userId == userId && month == dMonth && year == dYear
+        }
+            .map { it.toGqlType() }
+    }
 
     @DgsQuery
-    fun trackedDays(
+    fun trackedDay(
         dfe: DataFetchingEnvironment,
         @InputArgument id: String? = null,
-    ): List<TrackedDay> {
+    ): TrackedDay? {
 
         val userId = getUser(dfe)
 
@@ -67,30 +102,30 @@ class TrackedDayService {
             builder.and(QETrackedDay.eTrackedDay.id.eq(id))
         }
 
-        return dgsQuery(dfe) {
-            repository.findAll(builder)
-        }
+        return repository.findByIdOrNull(id)
+            ?.toGqlType()
     }
 
     @DgsQuery
-    fun trackedDaysForMonth(
+    fun trackedDaysForMonthYear(
         dfe: DataFetchingEnvironment,
-        @InputArgument month: Int
+        @InputArgument month: Int,
+        @InputArgument year: Int
     ): List<TrackedDay> {
 
         val userId = getUser(dfe)
 
-        val builder = BooleanBuilder()
-            .and(QETrackedDay.eTrackedDay.userId.eq(userId))
+//        val builder = BooleanBuilder()
+//            .and(QETrackedDay.eTrackedDay.userId.eq(userId))
+//
+//        builder.and(
+//            Expressions.dateTemplate(String::class.java, "{0}", QETrackedDay.eTrackedDay.date)
+//                .month()
+//                .eq(month)
+//        )
 
-        builder.and(
-            Expressions.dateTemplate(String::class.java, "{0}", QETrackedDay.eTrackedDay.date)
-                .month()
-                .eq(month)
-        )
 
-
-        val result = repository.findByMonthAndYear(month, 2024)
+        val result = repository.findByMonthAndYear(month, year, userId)
 
         return dgsQuery(dfe) {
             result
@@ -125,6 +160,7 @@ class TrackedDayService {
         )
     }
 
+
     @DgsMutation
     fun createTrackedDay(
         dfe: DataFetchingEnvironment,
@@ -154,8 +190,10 @@ class TrackedDayService {
         val year = cal.get(Calendar.YEAR)
 
         val dayMode = if (mode != null) DayMode.valueOf(mode) else DayMode.NORMAL
+
+
         return dgsMutate(dfe) {
-            repository.save(
+            val result = repository.save(
                 ETrackedDay(
                     date = d,
                     week = week,
@@ -164,6 +202,9 @@ class TrackedDayService {
                     userId = userId,
                 )
             )
+            trackedDayStream.next(result)
+
+            result
         }
     }
 
@@ -203,7 +244,11 @@ class TrackedDayService {
             date = if (date != null) Date(date.toLong()) else trackedDay.date,
             trackedTaskIds = trackedTaskIds ?: trackedDay.trackedTaskIds
         )
-        return repository.save(copy)
+        val result = repository.save(copy)
+
+        trackedDayStream.next(result)
+
+        return result
     }
 
     //
