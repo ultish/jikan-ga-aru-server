@@ -7,7 +7,7 @@ extend type Query {
     timeChargeTotals(weekOfYear: WeekOfYear): [TimeChargeTotal!]
 }
 extend type Subscription {
-    timeChargeTotalChanged(userId: String!): TimeChargeTotal
+    timeChargeTotalsChanged: TimeChargeTotal
 }
 
 #

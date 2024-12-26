@@ -185,6 +185,7 @@ class TrackedDayService {
 
         val d = Date(date.toLong())
         val cal = Calendar.getInstance()
+        cal.firstDayOfWeek = Calendar.MONDAY
         cal.time = d
         val week = cal.get(Calendar.WEEK_OF_YEAR)
         val year = cal.get(Calendar.YEAR)
@@ -239,9 +240,19 @@ class TrackedDayService {
         trackedTaskIds: List<String>? = null,
     ): ETrackedDay {
 
+        val dateCopy = if (date != null) Date(date.toLong()) else trackedDay.date
+
+        val cal = Calendar.getInstance()
+        cal.firstDayOfWeek = Calendar.MONDAY
+        cal.time = dateCopy
+        val week = cal.get(Calendar.WEEK_OF_YEAR)
+        val year = cal.get(Calendar.YEAR)
+        
         val copy = trackedDay.copy(
             mode = mode ?: trackedDay.mode,
-            date = if (date != null) Date(date.toLong()) else trackedDay.date,
+            date = dateCopy,
+            week = week,
+            year = year,
             trackedTaskIds = trackedTaskIds ?: trackedDay.trackedTaskIds
         )
         val result = repository.save(copy)
