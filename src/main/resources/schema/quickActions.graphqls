@@ -1,0 +1,18 @@
+extend type Query {
+    quickActions: [QuickAction!]
+    quickAction(id: ID!): QuickAction
+}
+
+extend type Mutation {
+    createQuickAction(name: String!, description: String, chargeCodeIds: [ID!], timeSlots: [Int!]): QuickAction!
+    updateQuickAction(id: ID!, name: String, description: String, chargeCodeIds: [ID!], timeSlots: [Int!]): QuickAction!
+    deleteQuickAction(id: ID!): Boolean
+}
+
+type QuickAction {
+    id: ID!
+    name: String!
+    description: String
+    chargeCodes: [ChargeCode!]
+    timeSlots: [Int!]
+}

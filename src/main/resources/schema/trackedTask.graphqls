@@ -1,5 +1,6 @@
 extend type Query {
     trackedTasks(trackedDayId: ID): [TrackedTask!]
+    trackedTask(trackedTaskId: ID!): TrackedTask
 }
 
 extend type Mutation {
