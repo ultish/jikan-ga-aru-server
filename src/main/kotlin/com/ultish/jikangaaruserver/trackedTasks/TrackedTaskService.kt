@@ -143,15 +143,7 @@ class TrackedTaskService {
             it.id
         }
     }
-
-//   @DgsData(parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
-//      field = DgsConstants.TRACKEDTASK.TimeBlocks)
-//   fun relatedTimeBlocks(dfe: DataFetchingEnvironment): CompletableFuture<List<TimeBlock>> {
-//      return dgsData<List<TimeBlock>, TrackedTask>(dfe,
-//         DATA_LOADER_FOR_TIME_BLOCKS) { trackedTask ->
-//         trackedTask.id
-//      }
-//   }
+ 
 
     @DgsData(
         parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,
