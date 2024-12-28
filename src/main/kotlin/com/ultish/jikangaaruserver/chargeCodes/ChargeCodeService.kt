@@ -107,7 +107,7 @@ class ChargeCodeService {
     }
 
     @DgsMutation
-    fun deleteChargeCode(@InputArgument id: String): Boolean {
+    fun deleteChargeCode(@InputArgument id: String): String? {
         // TODO validation, can't delete if it's in use
         return delete(repository, QEChargeCode.eChargeCode.id, id)
     }

@@ -113,7 +113,7 @@ class QuickActionService {
 
 
     @DgsMutation
-    fun deleteQuickAction(@InputArgument id: String): Boolean {
+    fun deleteQuickAction(@InputArgument id: String): String? {
         return delete(repository, QEQuickAction.eQuickAction.id, id)
     }
 

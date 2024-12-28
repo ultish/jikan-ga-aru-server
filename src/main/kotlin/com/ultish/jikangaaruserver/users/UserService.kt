@@ -23,102 +23,106 @@ import java.util.concurrent.CompletableFuture
 @DgsComponent
 class UserService {
 
-   companion object {
-      const val DATA_LOADER_FOR_TRACKED_DAYS = "trackedDaysForUser"
-   }
+    companion object {
+        const val DATA_LOADER_FOR_TRACKED_DAYS = "trackedDaysForUser"
+    }
 
-   @Autowired
-   lateinit var repository: UserRepository
+    @Autowired
+    lateinit var repository: UserRepository
 
-   @Autowired()
+    @Autowired()
 //   @Qualifier("TrackedDayRepository")
-   lateinit var trackedDayRepository: TrackedDayRepository
+    lateinit var trackedDayRepository: TrackedDayRepository
 
-   @DgsQuery
-   fun users(
-      dfe: DataFetchingEnvironment,
-      @InputArgument username: String?,
-   ): List<User> {
-      return dgsQuery(dfe) {
-         val builder = BooleanBuilder()
+    @DgsQuery
+    fun users(
+        dfe: DataFetchingEnvironment,
+        @InputArgument username: String?,
+    ): List<User> {
+        return dgsQuery(dfe) {
+            val builder = BooleanBuilder()
 
-         username?.let {
-            builder.and(QEUser.eUser.username.equalsIgnoreCase(it))
-         }
-         repository.findAll(builder)
-      }
-   }
+            username?.let {
+                builder.and(QEUser.eUser.username.equalsIgnoreCase(it))
+            }
+            repository.findAll(builder)
+        }
+    }
 
-   @DgsMutation
-   fun createUser(
-      @InputArgument username: String,
-      @InputArgument password: String,
-   ): User {
-      if (repository.exists(QEUser.eUser.username.eq(username))) {
-         throw DgsInvalidInputArgumentException("Username: $username already exists")
-      }
-      
-      return repository.save(
-         EUser(
-            username = username,
-            password = password, // TODO hash this
-            trackedDayIds = listOf()
-         )
-      ).toGqlType()
-   }
+    @DgsMutation
+    fun createUser(
+        @InputArgument username: String,
+        @InputArgument password: String,
+    ): User {
+        if (repository.exists(QEUser.eUser.username.eq(username))) {
+            throw DgsInvalidInputArgumentException("Username: $username already exists")
+        }
 
-   @DgsMutation
-   fun deleteUser(@InputArgument username: String): Boolean {
-      return delete(repository, QEUser.eUser.username, username)
-   }
+        return repository.save(
+            EUser(
+                username = username,
+                password = password, // TODO hash this
+                trackedDayIds = listOf()
+            )
+        )
+            .toGqlType()
+    }
 
-   @DgsMutation
-   fun updateUser(
-      @InputArgument userId: String,
-      @InputArgument trackedDayIds: List<String>? = null,
-   ): User {
-      val user = repository.findById(userId).map { it }.orElseThrow {
-         DgsInvalidInputArgumentException("Couldn't find User[${userId}]")
-      }
+    @DgsMutation
+    fun deleteUser(@InputArgument username: String): String? {
+        return delete(repository, QEUser.eUser.username, username)
+    }
 
-      return updateUser(user, trackedDayIds)
-   }
+    @DgsMutation
+    fun updateUser(
+        @InputArgument userId: String,
+        @InputArgument trackedDayIds: List<String>? = null,
+    ): User {
+        val user = repository.findById(userId)
+            .map { it }
+            .orElseThrow {
+                DgsInvalidInputArgumentException("Couldn't find User[${userId}]")
+            }
 
-   fun updateUser(user: EUser, trackedDayIds: List<String>? = null): User {
-      println("Updating user[${user.username}] with trackedDayIds[${trackedDayIds}]")
-      val copy = user.copy(
-         trackedDayIds = trackedDayIds ?: user.trackedDayIds
-      )
-      return repository.save(copy).toGqlType()
-   }
+        return updateUser(user, trackedDayIds)
+    }
 
-   //
-   // Document References (relationships)
-   // -------------------------------------------------------------------------
-   @DgsData(parentType = DgsConstants.USER.TYPE_NAME, field = DgsConstants.USER.TrackedDays)
-   fun trackedDaysForUser(dfe: DataFetchingEnvironment): CompletableFuture<List<TrackedDay>> {
-      return dgsData<List<TrackedDay>, User>(dfe, DATA_LOADER_FOR_TRACKED_DAYS) {
-         it.id
-      }
+    fun updateUser(user: EUser, trackedDayIds: List<String>? = null): User {
+        println("Updating user[${user.username}] with trackedDayIds[${trackedDayIds}]")
+        val copy = user.copy(
+            trackedDayIds = trackedDayIds ?: user.trackedDayIds
+        )
+        return repository.save(copy)
+            .toGqlType()
+    }
+
+    //
+    // Document References (relationships)
+    // -------------------------------------------------------------------------
+    @DgsData(parentType = DgsConstants.USER.TYPE_NAME, field = DgsConstants.USER.TrackedDays)
+    fun trackedDaysForUser(dfe: DataFetchingEnvironment): CompletableFuture<List<TrackedDay>> {
+        return dgsData<List<TrackedDay>, User>(dfe, DATA_LOADER_FOR_TRACKED_DAYS) {
+            it.id
+        }
 //      val dataLoader: DataLoader<String, List<TrackedDay>> =
 //         dfe.getDataLoader(DATA_LOADER_FOR_TRACKED_DAYS)
 //      val user = dfe.getSource<User>()
 //      return dataLoader.load(user.id)
-   }
+    }
 
-   //
-   // Data Loaders
-   // -------------------------------------------------------------------------
-   @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_DAYS, caching = true)
-   val trackedDaysBatchLoader = MappedBatchLoaderWithContext<String, List<TrackedDay>> { userIds, env ->
-      CompletableFuture.supplyAsync {
+    //
+    // Data Loaders
+    // -------------------------------------------------------------------------
+    @DgsDataLoader(name = DATA_LOADER_FOR_TRACKED_DAYS, caching = true)
+    val trackedDaysBatchLoader = MappedBatchLoaderWithContext<String, List<TrackedDay>> { userIds, env ->
+        CompletableFuture.supplyAsync {
 
-         val customContext = DgsContext.getCustomContext<CustomContext>(env)
+            val customContext = DgsContext.getCustomContext<CustomContext>(env)
 
-         val trackedDays = trackedDayRepository.findAll(QETrackedDay.eTrackedDay.userId.`in`(userIds))
-         customContext.entities.addAll(trackedDays)
+            val trackedDays = trackedDayRepository.findAll(QETrackedDay.eTrackedDay.userId.`in`(userIds))
+            customContext.entities.addAll(trackedDays)
 
-         trackedDays.groupBy({ it.userId }, { it.toGqlType() })
-      }
-   }
+            trackedDays.groupBy({ it.userId }, { it.toGqlType() })
+        }
+    }
 }

@@ -127,7 +127,7 @@ class TrackedTaskService {
     }
 
     @DgsMutation
-    fun deleteTrackedTask(@InputArgument id: String): Boolean {
+    fun deleteTrackedTask(@InputArgument id: String): String? {
         return delete(repository, QETrackedTask.eTrackedTask.id, id)
     }
 
@@ -143,7 +143,7 @@ class TrackedTaskService {
             it.id
         }
     }
- 
+
 
     @DgsData(
         parentType = DgsConstants.TRACKEDTASK.TYPE_NAME,

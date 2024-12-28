@@ -14,7 +14,7 @@ extend type Mutation {
         chargeCodeIds: [ID!]
         timeSlots: [Int!]
     ): TrackedTask!
-    deleteTrackedTask(id: ID): Boolean
+    deleteTrackedTask(id: ID): ID
 }
 
 type TrackedTask {
