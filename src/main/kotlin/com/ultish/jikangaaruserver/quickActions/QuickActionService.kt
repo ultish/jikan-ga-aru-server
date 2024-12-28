@@ -7,7 +7,6 @@ import com.querydsl.core.BooleanBuilder
 import com.ultish.generated.DgsConstants
 import com.ultish.generated.types.ChargeCode
 import com.ultish.generated.types.QuickAction
-import com.ultish.generated.types.TrackedTask
 import com.ultish.jikangaaruserver.chargeCodes.ChargeCodeRepository
 import com.ultish.jikangaaruserver.contexts.CustomContext
 import com.ultish.jikangaaruserver.dataFetchers.*
@@ -123,7 +122,7 @@ class QuickActionService {
         field = DgsConstants.QUICKACTION.ChargeCodes
     )
     fun relatedChargeCodes(dfe: DataFetchingEnvironment): CompletableFuture<List<ChargeCode>> {
-        return dgsData<List<ChargeCode>, TrackedTask>(
+        return dgsData<List<ChargeCode>, QuickAction>(
             dfe,
             DATA_LOADER_FOR_CHARGE_CODES
         ) { qa ->

@@ -7,6 +7,8 @@ extend type Mutation {
     createTrackedTask(
         trackedDayId: ID!,
         notes: String,
+        chargeCodeIds: [ID!]
+        timeSlots: [Int!]
     ): TrackedTask!
     updateTrackedTask(
         id: ID!,

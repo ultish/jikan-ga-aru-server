@@ -73,6 +73,8 @@ class TrackedTaskService {
         dfe: DataFetchingEnvironment,
         @InputArgument trackedDayId: String,
         @InputArgument notes: String?,
+        @InputArgument chargeCodeIds: List<String> = listOf(), // TrackedTask owns this relationship
+        @InputArgument timeSlots: List<Int> = listOf(),
     ): TrackedTask {
         if (!trackedDayRepository.existsById(trackedDayId)) {
             throw DgsInvalidInputArgumentException("Couldn't find TrackedDay[${trackedDayId}]")
@@ -81,13 +83,14 @@ class TrackedTaskService {
         // TODO validate this userId is real
         val userId = getUser(dfe)
 
-
         return dgsMutate(dfe) {
             repository.save(
                 ETrackedTask(
                     trackedDayId = trackedDayId,
                     notes = notes,
-                    userId = userId
+                    userId = userId,
+                    chargeCodeIds = chargeCodeIds,
+                    timeSlots = timeSlots
                 )
             )
         }
