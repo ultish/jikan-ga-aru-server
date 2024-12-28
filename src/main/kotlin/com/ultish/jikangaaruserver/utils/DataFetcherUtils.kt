@@ -33,15 +33,15 @@ import java.util.concurrent.CompletionStage
  */
 fun <G, E : GraphQLEntity<G>, R> delete(
     repository: R, keyPath: StringPath, key: String,
-): Boolean
+): String?
         where R : QuerydslPredicateExecutor<E>,
               R : MongoRepository<E, String> {
     val toDelete = repository.findOne(keyPath.eq(key))
     if (toDelete.isPresent) {
         repository.delete(toDelete.get())
-        return true
+        return key
     }
-    return false
+    return null
 }
 
 fun decode(cursor: String): Int {

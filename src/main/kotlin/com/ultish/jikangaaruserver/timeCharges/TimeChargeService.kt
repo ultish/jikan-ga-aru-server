@@ -144,6 +144,7 @@ class TimeChargeService {
                         .`in`(timeSlotsChanged)
                 )
                 .and(QETrackedTask.eTrackedTask.trackedDayId.eq(trackedDayId))
+//                .and(QETrackedTask.eTrackedTask.userId.eq(userId))
         )
             .toMutableList()
 

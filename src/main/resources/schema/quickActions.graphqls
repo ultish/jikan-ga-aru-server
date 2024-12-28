@@ -13,7 +13,7 @@ extend type Mutation {
         description: String,
         chargeCodeIds: [ID!],
         timeSlots: [Int!]): QuickAction!
-    deleteQuickAction(id: ID!): Boolean
+    deleteQuickAction(id: ID!): ID
 }
 
 type QuickAction {

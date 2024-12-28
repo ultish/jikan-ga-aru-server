@@ -210,7 +210,7 @@ class TrackedDayService {
     }
 
     @DgsMutation
-    fun deleteTrackedDay(@InputArgument id: String): Boolean {
+    fun deleteTrackedDay(@InputArgument id: String): String? {
         return delete(repository, QETrackedDay.eTrackedDay.id, id)
     }
 
@@ -247,7 +247,7 @@ class TrackedDayService {
         cal.time = dateCopy
         val week = cal.get(Calendar.WEEK_OF_YEAR)
         val year = cal.get(Calendar.YEAR)
-        
+
         val copy = trackedDay.copy(
             mode = mode ?: trackedDay.mode,
             date = dateCopy,
