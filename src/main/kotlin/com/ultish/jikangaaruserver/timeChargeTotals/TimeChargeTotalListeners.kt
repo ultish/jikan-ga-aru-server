@@ -11,25 +11,25 @@ import org.springframework.stereotype.Component
 @Component
 class TimeChargeTotalTimeChargeListener : AbstractMongoEventListener<ETimeCharge>() {
 
-   @Autowired
-   lateinit var timeChargeTotalService: TimeChargeTotalService
+    @Autowired
+    lateinit var timeChargeTotalService: TimeChargeTotalService
 
-   override fun onAfterSave(event: AfterSaveEvent<ETimeCharge>) {
-      super.onAfterSave(event)
+    override fun onAfterSave(event: AfterSaveEvent<ETimeCharge>) {
+        super.onAfterSave(event)
 
-      val timeCharge = event.source
+        val timeCharge = event.source
 
-      val trackedDay = timeCharge.trackedDayId
-      val chargeCode = timeCharge.chargeCodeId
-      val userId = timeCharge.userId
+        val trackedDay = timeCharge.trackedDayId
+        val chargeCode = timeCharge.chargeCodeId
+        val userId = timeCharge.userId
 
-      timeChargeTotalService.updateTimeChargeTotals(trackedDay, chargeCode, userId)
-   }
+        timeChargeTotalService.updateTimeChargeTotals(trackedDay, chargeCode, userId)
+    }
 
-   override fun onAfterDelete(event: AfterDeleteEvent<ETimeCharge>) {
-      val id = getIdFrom(event)
-      id?.let {
-         timeChargeTotalService.deletedTimeCharge(it)
-      }
-   }
+    override fun onAfterDelete(event: AfterDeleteEvent<ETimeCharge>) {
+        val id = getIdFrom(event)
+        id?.let {
+            timeChargeTotalService.deletedTimeCharge(it)
+        }
+    }
 }

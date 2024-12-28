@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 
 interface TrackedTaskRepository : MongoRepository<ETrackedTask, String>,
-   QuerydslPredicateExecutor<ETrackedTask> {
+    QuerydslPredicateExecutor<ETrackedTask> {
 }

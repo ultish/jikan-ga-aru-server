@@ -17,13 +17,13 @@ import org.springframework.data.mongodb.core.mapping.Document
 @QueryEntity
 @Entity
 data class EUser(
-   @Id
-   val id: String = ObjectId().toString(),
-   val username: String,
-   val password: String,
-   @Indexed
-   val trackedDayIds: List<String> = listOf(), // by using IDs only you need to fetch the relationships yourself via DGS
+    @Id
+    val id: String = ObjectId().toString(),
+    val username: String,
+    val password: String,
+    @Indexed
+    val trackedDayIds: List<String> = listOf(), // by using IDs only you need to fetch the relationships yourself via DGS
 ) : GraphQLEntity<User> {
-   override fun toGqlType(): User = User(id, username)
-   override fun id(): String = id
+    override fun toGqlType(): User = User(id, username)
+    override fun id(): String = id
 }

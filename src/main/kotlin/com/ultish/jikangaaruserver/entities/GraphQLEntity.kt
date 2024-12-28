@@ -5,6 +5,6 @@ package com.ultish.jikangaaruserver.entities
  * exposed to GraphQL schema should extend this interface
  */
 interface GraphQLEntity<T> {
-   fun toGqlType(): T
-   fun id(): String
+    fun toGqlType(): T
+    fun id(): String
 }

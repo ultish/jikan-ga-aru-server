@@ -11,34 +11,34 @@ import org.springframework.data.mongodb.core.mapping.Document
 @QueryEntity
 @Entity
 data class ETimeChargeTotal(
-   @Id
-   val id: String,
-   val value: Double,
-   @Indexed
-   val trackedDayId: String,
-   @Indexed
-   val chargeCodeId: String,
-   @Indexed
-   val userId: String,
+    @Id
+    val id: String,
+    val value: Double,
+    @Indexed
+    val trackedDayId: String,
+    @Indexed
+    val chargeCodeId: String,
+    @Indexed
+    val userId: String,
 ) : GraphQLEntity<TimeChargeTotal> {
-   constructor(
-      value: Double,
-      trackedDayId: String,
-      chargeCodeId: String,
-      userId: String,
-   ) : this(
-      id = "$userId:$trackedDayId:$chargeCodeId",
-      value = value,
-      trackedDayId = trackedDayId,
-      chargeCodeId = chargeCodeId,
-      userId = userId,
-   )
+    constructor(
+        value: Double,
+        trackedDayId: String,
+        chargeCodeId: String,
+        userId: String,
+    ) : this(
+        id = "$userId:$trackedDayId:$chargeCodeId",
+        value = value,
+        trackedDayId = trackedDayId,
+        chargeCodeId = chargeCodeId,
+        userId = userId,
+    )
 
-   override fun toGqlType(): TimeChargeTotal =
-      TimeChargeTotal(
-         id,
-         value
-      )
+    override fun toGqlType(): TimeChargeTotal =
+        TimeChargeTotal(
+            id,
+            value
+        )
 
-   override fun id(): String = id
+    override fun id(): String = id
 }

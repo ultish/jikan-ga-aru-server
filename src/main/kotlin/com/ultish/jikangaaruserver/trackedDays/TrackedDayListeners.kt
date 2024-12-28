@@ -12,42 +12,44 @@ import org.springframework.stereotype.Component
 
 @Component
 class TrackedDayUserListener : AbstractMongoEventListener<EUser>() {
-   @Autowired
-   lateinit var trackedDayService: TrackedDayService
+    @Autowired
+    lateinit var trackedDayService: TrackedDayService
 
-   override fun onAfterDelete(event: AfterDeleteEvent<EUser>) {
-      getIdFrom(event)?.let { userId ->
-         trackedDayService.repository.findAll(QETrackedDay.eTrackedDay.userId.eq(userId)).forEach { toDel ->
-            trackedDayService.deleteTrackedDay(toDel.id)
-         }
-      }
-   }
+    override fun onAfterDelete(event: AfterDeleteEvent<EUser>) {
+        getIdFrom(event)?.let { userId ->
+            trackedDayService.repository.findAll(QETrackedDay.eTrackedDay.userId.eq(userId))
+                .forEach { toDel ->
+                    trackedDayService.deleteTrackedDay(toDel.id)
+                }
+        }
+    }
 }
 
 @Component
 class TrackedDayTrackedTaskListener : AbstractMongoEventListener<ETrackedTask>() {
-   @Autowired
-   lateinit var trackedDayService: TrackedDayService
+    @Autowired
+    lateinit var trackedDayService: TrackedDayService
 
-   override fun onAfterSave(event: AfterSaveEvent<ETrackedTask>) {
-      val trackedDayId = event.source.trackedDayId
-      trackedDayService.repository.findById(trackedDayId).map { trackedDay ->
-         trackedDayService.updateTrackedDay(
-            trackedDay = trackedDay,
-            trackedTaskIds = trackedDay.trackedTaskIds + listOf(getIdFrom(event))
-         )
-      }
-   }
-
-   override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
-      getIdFrom(event)?.let { trackedTaskId ->
-         trackedDayService.repository.findAll(QETrackedDay.eTrackedDay.trackedTaskIds.contains(trackedTaskId))
-            .forEach { trackedDay ->
-               trackedDayService.updateTrackedDay(
-                  trackedDay = trackedDay,
-                  trackedTaskIds = trackedDay.trackedTaskIds - listOf(trackedTaskId).toSet()
-               )
+    override fun onAfterSave(event: AfterSaveEvent<ETrackedTask>) {
+        val trackedDayId = event.source.trackedDayId
+        trackedDayService.repository.findById(trackedDayId)
+            .map { trackedDay ->
+                trackedDayService.updateTrackedDay(
+                    trackedDay = trackedDay,
+                    trackedTaskIds = trackedDay.trackedTaskIds + listOf(getIdFrom(event))
+                )
             }
-      }
-   }
+    }
+
+    override fun onAfterDelete(event: AfterDeleteEvent<ETrackedTask>) {
+        getIdFrom(event)?.let { trackedTaskId ->
+            trackedDayService.repository.findAll(QETrackedDay.eTrackedDay.trackedTaskIds.contains(trackedTaskId))
+                .forEach { trackedDay ->
+                    trackedDayService.updateTrackedDay(
+                        trackedDay = trackedDay,
+                        trackedTaskIds = trackedDay.trackedTaskIds - listOf(trackedTaskId).toSet()
+                    )
+                }
+        }
+    }
 }

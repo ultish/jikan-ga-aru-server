@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 
 interface ChargeCodeRepository : MongoRepository<EChargeCode, String>,
-   QuerydslPredicateExecutor<EChargeCode> {
+    QuerydslPredicateExecutor<EChargeCode> {
 }

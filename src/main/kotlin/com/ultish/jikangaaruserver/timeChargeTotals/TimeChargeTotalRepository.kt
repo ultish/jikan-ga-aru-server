@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
 
 interface TimeChargeTotalRepository : MongoRepository<ETimeChargeTotal, String>,
-   QuerydslPredicateExecutor<ETimeChargeTotal> {
+    QuerydslPredicateExecutor<ETimeChargeTotal> {
 }

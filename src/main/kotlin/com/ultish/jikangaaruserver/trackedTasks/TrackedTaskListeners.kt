@@ -10,17 +10,17 @@ import org.springframework.stereotype.Component
 
 @Component
 class TrackedTaskTrackedDayListener : AbstractMongoEventListener<ETrackedDay>() {
-   @Autowired
-   lateinit var trackedTaskService: TrackedTaskService
+    @Autowired
+    lateinit var trackedTaskService: TrackedTaskService
 
-   override fun onAfterDelete(event: AfterDeleteEvent<ETrackedDay>) {
-      getIdFrom(event)?.let { trackedDayId ->
-         trackedTaskService.repository.findAll(QETrackedTask.eTrackedTask.trackedDayId.eq(trackedDayId))
-            .forEach { trackedTask ->
-               trackedTaskService.deleteTrackedTask(trackedTask.id)
-            }
-      }
-   }
+    override fun onAfterDelete(event: AfterDeleteEvent<ETrackedDay>) {
+        getIdFrom(event)?.let { trackedDayId ->
+            trackedTaskService.repository.findAll(QETrackedTask.eTrackedTask.trackedDayId.eq(trackedDayId))
+                .forEach { trackedTask ->
+                    trackedTaskService.deleteTrackedTask(trackedTask.id)
+                }
+        }
+    }
 }
 
 //@Component

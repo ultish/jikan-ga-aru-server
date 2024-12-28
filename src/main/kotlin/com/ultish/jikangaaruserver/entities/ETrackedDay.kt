@@ -14,41 +14,42 @@ import java.util.*
 @QueryEntity
 @Entity
 data class ETrackedDay(
-   @Id
-   val id: String,
-   val date: Date,
-   val week: Int,
-   val year: Int,
-   val mode: DayMode,
-   @Indexed
-   val userId: String,
-   @Indexed
-   val trackedTaskIds: List<String>,
+    @Id
+    val id: String,
+    val date: Date,
+    val week: Int,
+    val year: Int,
+    val mode: DayMode,
+    @Indexed
+    val userId: String,
+    @Indexed
+    val trackedTaskIds: List<String>,
 ) : GraphQLEntity<TrackedDay> {
-   constructor(
-      date: Date,
-      week: Int,
-      year: Int,
-      mode: DayMode,
-      userId: String,
-      trackedTaskIds: List<String> = listOf(),
-   ) : this(
-      id = "$userId:${ObjectId()}",
-      date,
-      week,
-      year,
-      mode,
-      userId,
-      trackedTaskIds
-   )
+    constructor(
+        date: Date,
+        week: Int,
+        year: Int,
+        mode: DayMode,
+        userId: String,
+        trackedTaskIds: List<String> = listOf(),
+    ) : this(
+        id = "$userId:${ObjectId()}",
+        date,
+        week,
+        year,
+        mode,
+        userId,
+        trackedTaskIds
+    )
 
-   override fun toGqlType(): TrackedDay =
-      TrackedDay(id,
-         date.time.toDouble(),
-         week,
-         year,
-         mode
-      )
+    override fun toGqlType(): TrackedDay =
+        TrackedDay(
+            id,
+            date.time.toDouble(),
+            week,
+            year,
+            mode
+        )
 
-   override fun id(): String = id
+    override fun id(): String = id
 }
