@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:16
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:25.0.2
+    depends_on:
+      - postgres
+    environment:
+      - KC_LOG_LEVEL=info,org.keycloak.authentication:debug
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=password
+      - KC_DB=postgres
+      - KC_DB_PASSWORD=password
+      - KC_DB_SCHEMA=public
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_DATABASE=keycloak
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/localhost.key
+      - KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/localhost.crt
+      #      - KC_HTTPS_KEY_STORE_FILE=/opt/keycloak/conf/keystore.p12
+      #      - KC_HTTPS_KEY_STORE_PASSWORD=changeit
+      #      - KC_HTTPS_KEY_STORE_TYPE=PKCS12
+
+      #      - KC_HTTPS_TRUST_STORE_FILE=/opt/keycloak/conf/truststore.jks
+      #      - KC_HTTPS_TRUST_STORE_PASSWORD=password
+      - KC_HTTPS_CLIENT_AUTH=request
+      - KEYCLOAK_HTTPS_CLIENT_AUTH=request
+    ports:
+      - 18080:8080
+      - 18443:8443
+    volumes:
+      - /Users/jxhui/Developer/certs/self/keycloak.crt:/opt/keycloak/conf/localhost.crt
+      - /Users/jxhui/Developer/certs/self/keycloak.key:/opt/keycloak/conf/localhost.key
+      - /Users/jxhui/Developer/certs/self/keycloak.conf:/opt/keycloak/conf/keycloak.conf
+      - /Users/jxhui/Developer/certs/self/myCA.jks:/opt/keycloak/conf/rootCA.jks
+    command: start-dev
+
+
+
+  # https://localhost:18443/realms/jxhui/protocol/openid-connect/auth?client_id=root&response_type=token&scope=openid&redirect_uri=http://localhost:4200
+
+
+  # https://localhost:18443/realms/jxhui/account/
