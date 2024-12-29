@@ -14,6 +14,9 @@ import com.ultish.jikangaaruserver.entities.EChargeCode
 import com.ultish.jikangaaruserver.entities.QEChargeCode
 import graphql.schema.DataFetchingEnvironment
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.userdetails.UserDetails
 
 @DgsComponent
 class ChargeCodeService {
@@ -22,14 +25,23 @@ class ChargeCodeService {
     lateinit var repository: ChargeCodeRepository
 
     @DgsQuery
+//    @Secured("client-tester")
     fun chargeCodes(
         dfe: DataFetchingEnvironment,
+        @AuthenticationPrincipal userDetails: UserDetails?,
         @InputArgument ids: List<String>?,
         @InputArgument name: String?,
         @InputArgument code: String?,
         @InputArgument description: String?,
         @InputArgument expired: Boolean?,
     ): List<ChargeCode> {
+        println(userDetails)
+
+        val test = SecurityContextHolder.getContext()
+            .getAuthentication()
+            .getPrincipal();
+
+
         return dgsQuery(dfe) {
             val builder = BooleanBuilder()
 

@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: keycloak-cert
+spec:
+  commonName: keycloak.localhost
+  secretName: keycloak-tls
+  issuerRef:
+    name: jxhui-selfsigned-clusterissuer
+    kind: ClusterIssuer
+  dnsNames:
+  - keycloak.localhost

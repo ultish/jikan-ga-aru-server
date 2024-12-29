@@ -21,6 +21,8 @@ import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import reactor.core.publisher.ConnectableFlux
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
@@ -66,13 +68,17 @@ class TrackedDayService {
         trackedDayPublisher.connect()
     }
 
+    // TODO this doesnt work
+//    @Secured("client-tester")
     @DgsSubscription
     fun trackedDayChanged(
         dfe: DataFetchingEnvironment,
+        @AuthenticationPrincipal userDetails: UserDetails?,
         @InputArgument month: Int,
         @InputArgument year: Int
     ): Publisher<TrackedDay> {
         val userId = getUser(dfe)
+ 
         return trackedDayPublisher.filter {
             // Convert java.util.Date to LocalDate
             val localDate = it.date.toInstant()

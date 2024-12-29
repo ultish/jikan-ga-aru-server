@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: jxhui-ca-cert
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: "jxhui-self-signed-ca"
+  secretName: jxhui-ca-key-pair
+  issuerRef:
+    name: jxhui-selfsigned-clusterissuer
+    kind: ClusterIssuer

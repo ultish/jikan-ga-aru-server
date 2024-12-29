@@ -5,7 +5,11 @@ Graphiql: http://localhost:8080/graphiql
 
 ## Learning
 
+See re graphql testing and security
+https://medium.com/@aleksandar.stojsavljevic/testing-graphql-servers-with-spring-and-dgs-797cccb9f0c7
+
 ### Kubernetes
+
 - reuse docker daemon from minikube
     ```zsh
     eval $(minikube docker-env)
@@ -35,7 +39,7 @@ Graphiql: http://localhost:8080/graphiql
     ```zsh
     eval $(minikube docker-env -u)
     ```
-  
+
 ### DataLoaders and Custom Contexts
 
 A custom context is passed from parent to child(s) which contains a mutable list of Entities that are loaded within a

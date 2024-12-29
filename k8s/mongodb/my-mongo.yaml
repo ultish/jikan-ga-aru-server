@@ -1,0 +1,62 @@
+---
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: mongo
+spec:
+  members: 1
+  type: ReplicaSet
+  version: "6.0.5"
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  users:
+    - name: my-user
+      db: jikan-ga-aru
+      passwordSecretRef: # a reference to the secret that will be used to generate the user's password
+        name: my-user-password
+      roles:
+        - name: clusterAdmin
+          db: jikan-ga-aru
+        - name: userAdminAnyDatabase
+          db: jikan-ga-aru
+        - name: readWriteAnyDatabase
+          db: jikan-ga-aru
+      scramCredentialsSecretName: my-scram
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+  statefulSet:
+    spec:
+      serviceName: mongo
+      template:
+        spec:
+          containers:
+            - name: mongodb
+              image: mongo
+              env:
+                - name: MONGO_INITDB_DATABASE
+                  value: platformdb
+                - name: MONGO_INITDB_ROOT_USERNAME
+                  value: admin
+                - name: MONGO_INITDB_ROOT_PASSWORD
+                  value: password
+            - name: mongodb-agent
+              readinessProbe:
+                exec:
+                  command:
+                    - ls
+                enabled: false
+                failureThreshold: 50
+                initialDelaySeconds: 300
+                periodSeconds: 300
+                timeoutSeconds: 300
+# the user credentials will be generated from this secret
+# once the credentials are generated, this secret is no longer required
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-user-password
+type: Opaque
+stringData:
+  password: password

@@ -5,6 +5,8 @@
 #      port: 27017
 #      database: jikan-ga-aru
 #      auto-index-creation: true
+client:
+  origins: "http://localhost:4200"
 
 spring:
   data:
@@ -15,11 +17,28 @@ spring:
     websocket:
       path: /graphql
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://localhost:18443/realms/jxhui
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+
+# JWT Configuration
+jwt:
+  auth:
+    converter:
+      resource-id: root
+      principal-attribute: x509-dn-mapper # this matches your keycloak settings
+
 logging:
   level:
+    root: INFO
     org:
       springframework:
+        security: DEBUG
         data:
-          mongodb:
-            core:
-              MongoTemplate: DEBUG
+          mongodb: INFO
+#
+#            core:
+#              MongoTemplate: DEBUG
