@@ -14,6 +14,7 @@ import com.ultish.jikangaaruserver.entities.EChargeCode
 import com.ultish.jikangaaruserver.entities.QEChargeCode
 import graphql.schema.DataFetchingEnvironment
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
@@ -61,6 +62,7 @@ class ChargeCodeService {
         }
     }
 
+    @PreAuthorize("hasRole('client-tester')")
     @DgsMutation
     fun createChargeCode(
         dfe: DataFetchingEnvironment,
@@ -86,6 +88,8 @@ class ChargeCodeService {
     }
 
     @DgsMutation
+//    @Secured("client-tester") // TODO this doesnt work. maybe becos by default it expects role named "ROLE_xxx"
+    @PreAuthorize("hasRole('client-tester')")
     fun updateChargeCode(
         dfe: DataFetchingEnvironment,
         @InputArgument id: String,
@@ -118,6 +122,7 @@ class ChargeCodeService {
         }
     }
 
+    @PreAuthorize("hasRole('client-tester')")
     @DgsMutation
     fun deleteChargeCode(@InputArgument id: String): String? {
         // TODO validation, can't delete if it's in use
