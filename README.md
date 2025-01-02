@@ -48,4 +48,12 @@ relatively easy query against the DB. Each dataLoader that pulls new data from t
 adding Entities loaded into this Custom Context for the next child. (This may assume the child queries are not loaded in
 parallel...)
 
-Not sure if this code will survive a refactor to a federated graphQL service in the future though. 
+Not sure if this code will survive a refactor to a federated graphQL service in the future though.
+
+# Running in IDEA
+
+Adding truststore/key to VM options:
+
+```
+-Djavax.net.ssl.trustStore=jikan-ga-aru-server/src/main/resources/truststore.jks -Djavax.net.ssl.trustStorePassword=<password>
+```
