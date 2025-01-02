@@ -4,6 +4,7 @@ import com.ultish.jikangaaruserver.entities.ETrackedDay
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.querydsl.QuerydslPredicateExecutor
+import java.util.*
 
 interface TrackedDayRepository : MongoRepository<ETrackedDay, String>,
     QuerydslPredicateExecutor<ETrackedDay> {
@@ -24,5 +25,19 @@ interface TrackedDayRepository : MongoRepository<ETrackedDay, String>,
         }"""
     )
     fun findByMonthAndYear(month: Int, year: Int, userId: String): List<ETrackedDay>
+
+    @Query(
+        """
+        {
+            ${'$'}expr: {
+                ${'$'}and: [
+                    { ${'$'}gte: ['${'$'}date', :#{#startDate}] },
+                    { ${'$'}lt: ['${'$'}date', :#{#endDate}] },
+                    { ${'$'}eq: ['${'$'}userId', :#{#userId}] }
+                ]
+            }
+        }"""
+    )
+    fun findByDateRange(startDate: Date, endDate: Date, userId: String): List<ETrackedDay>
 
 }

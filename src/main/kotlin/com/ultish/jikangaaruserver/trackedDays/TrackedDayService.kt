@@ -27,6 +27,7 @@ import reactor.core.publisher.ConnectableFlux
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.WeekFields
 import java.util.*
@@ -114,6 +115,35 @@ class TrackedDayService {
             ?.toGqlType()
     }
 
+    fun getUtcDateRangeForSydneyMonth(year: Int, month: Int): Pair<Date, Date> {
+        val sydney = ZoneId.of("Australia/Sydney")
+
+        // Start: First day of month at 00:00:00
+        val startSydney = LocalDateTime.of(year, month, 1, 0, 0, 0)
+            .atZone(sydney)
+        val startUtc = startSydney.toInstant()
+
+        // End: Last day of month at 23:59:59.999
+        val endSydney = startSydney
+            .plusMonths(1)
+            .minusNanos(1)  // This gives us 23:59:59.999999999
+        val endUtc = endSydney.toInstant()
+
+        println(
+            """
+            Sydney start: $startSydney
+            UTC start: ${startUtc} (${Date.from(startUtc)})
+            Sydney end: $endSydney
+            UTC end: ${endUtc} (${Date.from(endUtc)})""".trimIndent()
+        )
+
+        return Pair(
+            Date.from(startUtc),
+            Date.from(endUtc)
+        )
+    }
+
+
     @DgsQuery
     fun trackedDaysForMonthYear(
         dfe: DataFetchingEnvironment,
@@ -122,28 +152,12 @@ class TrackedDayService {
     ): List<TrackedDay> {
 
         val userId = getUser(dfe)
+        val (start, end) = getUtcDateRangeForSydneyMonth(year, month)
 
-//        val builder = BooleanBuilder()
-//            .and(QETrackedDay.eTrackedDay.userId.eq(userId))
-//
-//        builder.and(
-//            Expressions.dateTemplate(String::class.java, "{0}", QETrackedDay.eTrackedDay.date)
-//                .month()
-//                .eq(month)
-//        )
-
-
-        val result = repository.findByMonthAndYear(month, year, userId)
-
+        val result = repository.findByDateRange(start, end, userId)
         return dgsQuery(dfe) {
             result
-
         }
-
-//        return dgsQuery(dfe) {
-//            repository.findAll(builder)
-//        }
-
     }
 
     @DgsQuery
@@ -211,7 +225,7 @@ class TrackedDayService {
 
         val d = Date(date.toLong())
         val (week, year) = this.getWeekAndYear(date.toLong())
-        
+
         val dayMode = if (mode != null) DayMode.valueOf(mode) else DayMode.NORMAL
 
 
