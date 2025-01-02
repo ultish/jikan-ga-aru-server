@@ -5,3 +5,8 @@ services:
     container_name: mongodb
     ports:
       - 27017:27017
+    environment:
+      - TZ=Australia/Sydney  # Set the timezone to Australian Eastern Time
+    volumes:
+      - ./mongodb:/data/db
+    user: "501:20"  # this is for my mac

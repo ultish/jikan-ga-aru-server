@@ -15,7 +15,7 @@ extend type Subscription {
 extend type Mutation {
     createTrackedDay(date: Float!, mode: String): TrackedDay
     deleteTrackedDay(id: ID!): ID
-    updateTrackedDay(id: ID!, mode: DayMode, date: Float, trackedTaskIds: [String!]): TrackedDay
+    updateTrackedDay(id: ID!, mode: DayMode, trackedTaskIds: [String!]): TrackedDay
 }
 
 

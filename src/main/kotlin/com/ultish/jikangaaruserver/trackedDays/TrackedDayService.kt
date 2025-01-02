@@ -26,7 +26,9 @@ import org.springframework.security.core.userdetails.UserDetails
 import reactor.core.publisher.ConnectableFlux
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
+import java.time.Instant
 import java.time.ZoneId
+import java.time.temporal.WeekFields
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -78,7 +80,7 @@ class TrackedDayService {
         @InputArgument year: Int
     ): Publisher<TrackedDay> {
         val userId = getUser(dfe)
- 
+
         return trackedDayPublisher.filter {
             // Convert java.util.Date to LocalDate
             val localDate = it.date.toInstant()
@@ -167,6 +169,24 @@ class TrackedDayService {
     }
 
 
+    fun getWeekAndYear(date: Long): Pair<Int, Int> {
+        // TODO could be configurable
+        val zone = ZoneId.systemDefault()
+        val zonedDateTime = Instant.ofEpochMilli(date)
+            .atZone(zone)
+
+        // Get the LocalDate from the ZonedDateTime
+        val localDate = zonedDateTime.toLocalDate()
+
+        // using ISO week makes sure 31st dec 2024 is week 1 of 2025
+        val isoWeeks = WeekFields.ISO
+        val week = localDate.get(isoWeeks.weekOfWeekBasedYear())
+        val year = localDate.get(isoWeeks.weekBasedYear())
+
+        return Pair(week, year)
+    }
+
+
     @DgsMutation
     fun createTrackedDay(
         dfe: DataFetchingEnvironment,
@@ -190,12 +210,8 @@ class TrackedDayService {
         }
 
         val d = Date(date.toLong())
-        val cal = Calendar.getInstance()
-        cal.firstDayOfWeek = Calendar.MONDAY
-        cal.time = d
-        val week = cal.get(Calendar.WEEK_OF_YEAR)
-        val year = cal.get(Calendar.YEAR)
-
+        val (week, year) = this.getWeekAndYear(date.toLong())
+        
         val dayMode = if (mode != null) DayMode.valueOf(mode) else DayMode.NORMAL
 
 
@@ -225,7 +241,6 @@ class TrackedDayService {
         dfe: DataFetchingEnvironment,
         @InputArgument id: String,
         @InputArgument mode: DayMode? = null,
-        @InputArgument date: Double? = null,
         @InputArgument trackedTaskIds: List<String>? = null,
     ): TrackedDay {
         val record = repository.findById(id)
@@ -235,30 +250,19 @@ class TrackedDayService {
             }
 
         return dgsMutate(dfe) {
-            updateTrackedDay(record, mode, date, trackedTaskIds)
+            updateTrackedDay(record, mode, trackedTaskIds)
         }
     }
 
     fun updateTrackedDay(
         trackedDay: ETrackedDay,
         mode: DayMode? = null,
-        date: Double? = null,
         trackedTaskIds: List<String>? = null,
     ): ETrackedDay {
 
-        val dateCopy = if (date != null) Date(date.toLong()) else trackedDay.date
-
-        val cal = Calendar.getInstance()
-        cal.firstDayOfWeek = Calendar.MONDAY
-        cal.time = dateCopy
-        val week = cal.get(Calendar.WEEK_OF_YEAR)
-        val year = cal.get(Calendar.YEAR)
 
         val copy = trackedDay.copy(
             mode = mode ?: trackedDay.mode,
-            date = dateCopy,
-            week = week,
-            year = year,
             trackedTaskIds = trackedTaskIds ?: trackedDay.trackedTaskIds
         )
         val result = repository.save(copy)
