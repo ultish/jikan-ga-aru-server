@@ -1,10 +1,8 @@
-version: '3'
-
 services:
   postgres:
     image: postgres:16
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - ../keycloak/postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -36,13 +34,22 @@ services:
       - 18080:8080
       - 18443:8443
     volumes:
-      - ./certs/keycloak.crt:/opt/keycloak/conf/localhost.crt
-      - ./certs/keycloak.key:/opt/keycloak/conf/localhost.key
-      - ./certs/myCA.jks:/opt/keycloak/conf/rootCA.jks
-      - ./keycloak.conf:/opt/keycloak/conf/keycloak.conf
+      - ../keycloak/certs/keycloak.crt:/opt/keycloak/conf/localhost.crt
+      - ../keycloak/certs/keycloak.key:/opt/keycloak/conf/localhost.key
+      - ../keycloak/certs/myCA.jks:/opt/keycloak/conf/rootCA.jks
+      - ../keycloak/keycloak.conf:/opt/keycloak/conf/keycloak.conf
     command: start-dev
 
-
+  mongo:
+    image: mongo:5.0.26
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    environment:
+      - TZ=Australia/Sydney  # Set the timezone to Australian Eastern Time
+    volumes:
+      - ../mongodb/mongodb:/data/db
+    user: "501:20"  # this is for my mac
 
   # https://localhost:18443/realms/jxhui/protocol/openid-connect/auth?client_id=root&response_type=token&scope=openid&redirect_uri=http://localhost:4200
 

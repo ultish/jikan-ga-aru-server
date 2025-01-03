@@ -6,7 +6,21 @@
 #      database: jikan-ga-aru
 #      auto-index-creation: true
 client:
-  origins: "http://localhost:4200"
+  origins:
+    - https://localhost:4200
+    - https://localhost
+    - https://192.168.1.41
+
+server:
+  address: 0.0.0.0
+  port: 8443
+  ssl:
+    enabled: true
+    certificate: classpath:cert/jikan-server.crt
+    certificate-private-key: classpath:cert/jikan-server.key
+    trust-store: classpath:cert/truststore.jks
+    trust-store-password: password
+    trust-store-type: JKS
 
 spring:
   data:
@@ -21,10 +35,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://localhost:18443/realms/jxhui
+          #          issuer-uri: https://localhost:18443/realms/jxhui
+          issuer-uri: https://192.168.1.41:18443/realms/jxhui
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
-# JWT Configuration
+## JWT Configuration
 jwt:
   auth:
     converter:

@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.stereotype.Component
 import org.springframework.web.context.request.WebRequest
-import java.util.*
 
 
 @Component
@@ -30,42 +29,32 @@ class CustomContextBuilder : DgsCustomContextBuilderWithRequest<CustomContext> {
             .principal
 
         var userId = headers?.getFirst("user-id")
-        var username: String? = null
-        var roles: List<String>?
+        var name: String = "unknown"
 
         var jwt: Jwt? = null
         if (principal is Jwt) {
             jwt = principal
-            username = jwt.claims["username"].toString()
-            roles = jwt.claims["roles"] as List<String>?
+            userId = jwt.claims["sub"].toString()
+            name = jwt.claims["name"].toString()
         } else {
             println("principal: $principal")
-            // TODO temp check ws
-//            userId = "b9d6c43e-cc6a-332b-9707-691a2b261642"
         }
 
 
         if (userId == null) {
-            if (username == null) {
-                // websocket is doing dodgy atm
-                val securityContext = extensions?.get("TESTME")
-                if (securityContext is SecurityContext) {
-                    val p = securityContext.authentication.principal
-                    if (p is Jwt) {
-                        roles = p.claims.get("roles") as List<String>?
-                        username = p.claims.get("username")
-                            .toString()
-                    }
+            // websocket is doing dodgy atm
+            val securityContext = extensions?.get("TESTME")
+            if (securityContext is SecurityContext) {
+                val p = securityContext.authentication.principal
+                if (p is Jwt) {
+                    userId = p.claims["sub"].toString()
+                    name = p.claims["name"].toString()
                 }
             }
 
-            if (username != null) {
-                userId = UUID.nameUUIDFromBytes(username.toByteArray())
-                    .toString()
-
-
+            if (userId != null) {
                 if (!repository.existsById(userId)) {
-                    val newUser = repository.save(EUser(username, ""))
+                    val newUser = repository.save(EUser(userId, name, ""))
                     println(newUser)
                 }
             }

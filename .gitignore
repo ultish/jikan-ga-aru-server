@@ -36,3 +36,4 @@ out/
 ### VS Code ###
 .vscode/
 /docker/mongodb/mongodb/
+/docker/keycloak/postgres_data/

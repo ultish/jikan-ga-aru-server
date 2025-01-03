@@ -1,0 +1,23 @@
+[req]
+default_md = sha256
+prompt = no
+req_extensions = req_ext
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+commonName = jikan-server
+countryName = US
+stateOrProvinceName = No state
+localityName = City
+organizationName = LTD
+
+[req_ext]
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = critical,serverAuth,clientAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = jikan-server
+DNS.2 = jikan-server
+DNS.3 = localhost
+DNS.4 = 192.168.1.41

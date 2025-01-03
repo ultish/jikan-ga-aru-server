@@ -25,9 +25,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket
 @Configuration
 @EnableWebSecurity
 @EnableWebSocket
-class SecurityConfig /*: WebSocketConfigurer*/ {
-    @Value("\${client.origins}")
-    lateinit var origins: String
+class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfigurer*/ {
+//    @Value("\${client.origins}")
+//    lateinit var origins: String
 
     /**
      * also see https://github.com/Netflix/dgs-framework/issues/1294 for example setup
@@ -63,9 +63,9 @@ class SecurityConfig /*: WebSocketConfigurer*/ {
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
-        val o = this.origins;
+
         val configuration = CorsConfiguration().apply {
-            allowedOrigins = listOf(o) // Add your frontend origins
+            allowedOrigins = clientConfig.origins // Add your frontend origins
             allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
             allowedHeaders = listOf(
                 "Authorization",
