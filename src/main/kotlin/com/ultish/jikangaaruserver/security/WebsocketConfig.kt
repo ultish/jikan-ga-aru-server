@@ -1,5 +1,6 @@
-package com.ultish.jikangaaruserver.contexts
+package com.ultish.jikangaaruserver.security
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -10,8 +11,12 @@ import org.springframework.graphql.server.support.BearerTokenAuthenticationExtra
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.ReactiveSecurityContextHolder
 import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.JwtValidators
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtReactiveAuthenticationManager
+import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.util.context.ContextView
 
@@ -66,7 +71,8 @@ import reactor.util.context.ContextView
 
 class Test(
     val issuerUri: String,
-    val authenticationExtractor: AuthenticationExtractor
+    val authenticationExtractor: AuthenticationExtractor,
+    val customDecoder: CustomDecoder
 ) : AbstractAuthenticationWebSocketInterceptor(authenticationExtractor) {
 
 
@@ -85,25 +91,40 @@ class Test(
     }
 
     override fun authenticate(authentication: Authentication): Mono<Authentication> {
-        val authMgr = JwtReactiveAuthenticationManager(ReactiveJwtDecoders.fromIssuerLocation(this.issuerUri))
+
+//        val authMgr = JwtReactiveAuthenticationManager(ReactiveJwtDecoders.fromIssuerLocation(this.issuerUri))
+        val authMgr = JwtReactiveAuthenticationManager(customDecoder)
         return authMgr.authenticate(authentication)
     }
 
     override fun getContextToWrite(securityContext: SecurityContext): ContextView {
-
-        println(securityContext)
-//        val key = SecurityContext::class.java.name // match SecurityContextThreadLocalAccessor key
-
-//        return Context.of(key, securityContext)
-
         return ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext))
 
     }
+}
 
+@Component
+class CustomDecoder : ReactiveJwtDecoder {
+    @Value("\${client.jwt.issuer}")
+    lateinit var issuer: String
+
+    @Value("\${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+    lateinit var jwlSetUri: String
+
+    override fun decode(token: String?): Mono<Jwt> {
+        val defaultVal = JwtValidators.createDefaultWithIssuer(this.issuer)
+        val jwtVal = NimbusReactiveJwtDecoder.withJwkSetUri(this.jwlSetUri)
+            .build()
+        jwtVal.setJwtValidator(defaultVal)
+
+        return jwtVal.decode(token)
+    }
 }
 
 @Configuration
 class WSConfigurer {
+    @Autowired
+    lateinit var customDecoder: CustomDecoder
 
     /**
      * the magic sauce to wire up web socket JWTs
@@ -113,10 +134,6 @@ class WSConfigurer {
         @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
         issuerUri: String
     ): WebSocketGraphQlInterceptor {
-        return Test(issuerUri, BearerTokenAuthenticationExtractor())
-//        return AuthenticationWebSocketInterceptor(
-//            BearerTokenAuthenticationExtractor(),
-//            JwtReactiveAuthenticationManager(ReactiveJwtDecoders.fromIssuerLocation(issuerUri))
-//        )
+        return Test(issuerUri, BearerTokenAuthenticationExtractor(), this.customDecoder)
     }
 }

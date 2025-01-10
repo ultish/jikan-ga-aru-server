@@ -11,6 +11,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
@@ -26,8 +27,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket
 @EnableWebSecurity
 @EnableWebSocket
 class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfigurer*/ {
-//    @Value("\${client.origins}")
-//    lateinit var origins: String
 
     /**
      * also see https://github.com/Netflix/dgs-framework/issues/1294 for example setup
@@ -42,13 +41,12 @@ class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfig
             .csrf { it.disable() } // duno?
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers(
-                        "/graphiql",
-                        "/graphql",
-                        "/graphql/**",  // Allow WebSocket handshake paths
-                        "/ws/**"              // Additional WebSocket paths if needed
-                    )
+                    .requestMatchers("subscriptions", "graphiql")
                     .permitAll()
+                    .requestMatchers(
+                        "/graphql",
+                    )
+                    .authenticated()
                     .anyRequest()
                     .authenticated()
             }
@@ -75,6 +73,7 @@ class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfig
                 "X-Requested-With",
                 "Access-Control-Request-Method",
                 "Access-Control-Request-Headers",
+                "Access-Control-Allow-Origin",
                 "user-id",
                 "Sec-WebSocket-Protocol",     // Required for WebSocket
                 "Sec-WebSocket-Version",
@@ -91,11 +90,15 @@ class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfig
 
     @Bean
     fun jwtDecoder(
+        @Value("\${client.jwt.issuer}") issuer: String,
         @Value("\${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
         jwlSetUri: String
     ): JwtDecoder {
-        return NimbusJwtDecoder.withJwkSetUri(jwlSetUri)
+        val defaultVal = JwtValidators.createDefaultWithIssuer(issuer)
+        val jwtVal = NimbusJwtDecoder.withJwkSetUri(jwlSetUri)
             .build()
+        jwtVal.setJwtValidator(defaultVal)
+        return jwtVal
     }
 
     @Bean

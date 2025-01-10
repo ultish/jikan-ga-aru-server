@@ -3,13 +3,17 @@ client:
     - https://localhost:4200
     - https://localhost
     - https://192.168.1.41
+    - https://192.168.1.41:4200
     - http://localhost:4200
+  jwt:
+    issuer: https://192.168.1.41:18443/realms/jxhui
 
 server:
-  address: 0.0.0.0
-  port: 8443
+  #  address: 0.0.0.0
+  #  port: 8443
+  port: 80
   ssl:
-    enabled: true
+    enabled: false
     certificate: classpath:cert/jikan-server.crt
     certificate-private-key: classpath:cert/jikan-server.key
     trust-store: classpath:cert/truststore.jks
@@ -23,7 +27,7 @@ spring:
       auto-index-creation: true
   graphql:
     websocket:
-      path: /graphql
+      path: /subscriptions
 
   security:
     oauth2:
@@ -42,10 +46,11 @@ jwt:
 
 logging:
   level:
-    root: INFO
+    root: TRACE
     org:
+      mongodb: INFO
       springframework:
-        security: DEBUG
+        security: TRACE
         data:
           mongodb: INFO
 #
