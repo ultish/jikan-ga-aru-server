@@ -185,7 +185,7 @@ class TrackedDayService {
 
     fun getWeekAndYear(date: Long): Pair<Int, Int> {
         // TODO could be configurable
-        val zone = ZoneId.systemDefault()
+        val zone = ZoneId.of("Australia/Sydney")
         val zonedDateTime = Instant.ofEpochMilli(date)
             .atZone(zone)
 
