@@ -20,7 +20,6 @@ import org.dataloader.MappedBatchLoaderWithContext
 import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import reactor.core.publisher.ConnectableFlux
@@ -99,20 +98,18 @@ class TrackedDayService {
     @DgsQuery
     fun trackedDay(
         dfe: DataFetchingEnvironment,
-        @InputArgument id: String? = null,
+        @InputArgument id: String
     ): TrackedDay? {
 
         val userId = getUser(dfe)
 
         val builder = BooleanBuilder()
             .and(QETrackedDay.eTrackedDay.userId.eq(userId))
+            .and(QETrackedDay.eTrackedDay.id.eq(id))
 
-        id?.let {
-            builder.and(QETrackedDay.eTrackedDay.id.eq(id))
-        }
-
-        return repository.findByIdOrNull(id)
-            ?.toGqlType()
+        return repository.findOne(builder)
+            .map { it.toGqlType() }
+            .orElseThrow()
     }
 
     fun getUtcDateRangeForSydneyMonth(year: Int, month: Int): Pair<Date, Date> {
