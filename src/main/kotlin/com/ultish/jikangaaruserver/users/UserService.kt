@@ -45,7 +45,9 @@ class UserService {
             username?.let {
                 builder.and(QEUser.eUser.username.equalsIgnoreCase(it))
             }
+ 
             repository.findAll(builder)
+
         }
     }
 

@@ -41,14 +41,14 @@ class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfig
             .csrf { it.disable() } // duno?
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("subscriptions", "graphiql")
+                    .requestMatchers("subscriptions", "graphiql", "graphql", "actuator/**")
                     .permitAll()
-                    .requestMatchers(
-                        "/graphql",
-                    )
-                    .authenticated()
+//                    .requestMatchers(
+//                        "/graphql",
+//                    )
+//                    .authenticated()
                     .anyRequest()
-                    .authenticated()
+                    .permitAll()
             }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->

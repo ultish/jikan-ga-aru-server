@@ -21,6 +21,8 @@ server:
     trust-store-type: JKS
 
 spring:
+  application:
+    name: jikan-server
   data:
     mongodb:
       uri: mongodb://localhost:27017/jikan-ga-aru
@@ -46,13 +48,29 @@ jwt:
 
 logging:
   level:
-    root: TRACE
+    root: info
     org:
       mongodb: INFO
       springframework:
+        beans:
+          factory:
+            support: INFO
         security: TRACE
         data:
           mongodb: INFO
+  #
+  #            core:
+  #              MongoTemplate: DEBUG
 #
-#            core:
-#              MongoTemplate: DEBUG
+
+
+management:
+  otlp:
+    tracing:
+      export:
+        enabled: true
+      endpoint: "http://192.168.1.41:4318/v1/traces" # this causes it to export! finally....
+  tracing:
+    sampling:
+      probability: 1.0 # sample 100% of events
+    enabled: true
