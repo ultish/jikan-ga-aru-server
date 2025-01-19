@@ -39,8 +39,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
-    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-graphql-starter")
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
+//    implementation("com.netflix.graphql.dgs:graphql-dgs-spring-graphql-starter")
+    implementation("com.netflix.graphql.dgs:dgs-starter")
+    implementation("io.projectreactor:reactor-core")
+//    implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     // Use a newer version of QueryDSL that's compatible with Spring Boot 3.x
     implementation("com.querydsl:querydsl-mongodb:5.1.0") {

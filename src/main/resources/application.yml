@@ -20,16 +20,18 @@ server:
     trust-store-password: password
     trust-store-type: JKS
 
+
 spring:
+
   application:
     name: jikan-server
   data:
     mongodb:
       uri: mongodb://localhost:27017/jikan-ga-aru
       auto-index-creation: true
-  graphql:
-    websocket:
-      path: /subscriptions
+  #  graphql:
+  #    websocket:
+  #      path: /subscriptions
 
   security:
     oauth2:
@@ -48,8 +50,12 @@ jwt:
 
 logging:
   level:
-    root: info
+    root: trace
+
     org:
+      apache:
+        catalina:
+          core: info
       mongodb: INFO
       springframework:
         beans:

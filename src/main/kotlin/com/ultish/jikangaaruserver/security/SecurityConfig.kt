@@ -19,13 +19,12 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
-import org.springframework.web.socket.config.annotation.EnableWebSocket
 
 
 @EnableMethodSecurity
 @Configuration
 @EnableWebSecurity
-@EnableWebSocket
+//@EnableWebSocket
 class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfigurer*/ {
 
     /**
@@ -49,12 +48,16 @@ class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfig
 //                    .authenticated()
                     .anyRequest()
                     .permitAll()
+
             }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
                     jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
                 }
             }
+
+        // Enable Security Context propagation
+//        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL)
 
         return http.build()
     }
@@ -64,22 +67,24 @@ class SecurityConfig(private val clientConfig: ClientConfig) /*: WebSocketConfig
 
         val configuration = CorsConfiguration().apply {
             allowedOrigins = clientConfig.origins // Add your frontend origins
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-            allowedHeaders = listOf(
-                "Authorization",
-                "Content-Type",
-                "Origin",
-                "Accept",
-                "X-Requested-With",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers",
-                "Access-Control-Allow-Origin",
-                "user-id",
-                "Sec-WebSocket-Protocol",     // Required for WebSocket
-                "Sec-WebSocket-Version",
-                "Sec-WebSocket-Key"
-            )
-            allowCredentials = true
+            allowedMethods = listOf("*")
+            allowedHeaders = listOf("*")
+//            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+//            allowedHeaders = listOf(
+//                "Authorization",
+//                "Content-Type",
+//                "Origin",
+//                "Accept",
+//                "X-Requested-With",
+//                "Access-Control-Request-Method",
+//                "Access-Control-Request-Headers",
+//                "Access-Control-Allow-Origin",
+//                "user-id",
+//                "Sec-WebSocket-Protocol",     // Required for WebSocket
+//                "Sec-WebSocket-Version",
+//                "Sec-WebSocket-Key"
+//            )
+            allowCredentials = false
             maxAge = 3600L
         }
 
