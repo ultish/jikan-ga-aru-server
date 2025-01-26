@@ -65,6 +65,10 @@ logging:
 
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
   otlp:
     tracing:
       export:

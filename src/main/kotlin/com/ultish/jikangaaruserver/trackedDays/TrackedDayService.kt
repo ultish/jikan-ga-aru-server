@@ -70,27 +70,30 @@ class TrackedDayService {
         trackedDayPublisher.connect()
     }
 
-    // TODO this doesnt work
-//    @Secured("client-tester")
+
     @DgsSubscription
     fun trackedDayChanged(
         dfe: DataFetchingEnvironment,
         @AuthenticationPrincipal userDetails: UserDetails?,
-        @InputArgument month: Int,
-        @InputArgument year: Int
+        @InputArgument month: Int?,
+        @InputArgument year: Int?
     ): Publisher<TrackedDay> {
         val userId = getUser(dfe)
 
         return trackedDayPublisher.filter {
-            // Convert java.util.Date to LocalDate
-            val localDate = it.date.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
+            if (month == null && year == null) {
+                true
+            } else {
+                // Convert java.util.Date to LocalDate
+                val localDate = it.date.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
 
-            // Extract month and year
-            val dMonth = localDate.monthValue // 1 to 12
-            val dYear = localDate.year
-            it.userId == userId && month == dMonth && year == dYear
+                // Extract month and year
+                val dMonth = localDate.monthValue // 1 to 12
+                val dYear = localDate.year
+                it.userId == userId && month == dMonth && year == dYear
+            }
         }
             .map { it.toGqlType() }
     }
@@ -152,6 +155,16 @@ class TrackedDayService {
         val (start, end) = getUtcDateRangeForSydneyMonth(year, month)
 
         val result = repository.findByDateRange(start, end, userId)
+        return dgsQuery(dfe) {
+            result
+        }
+    }
+
+    @DgsQuery
+    fun trackedDays(
+        dfe: DataFetchingEnvironment
+    ): List<TrackedDay> {
+        val result = repository.findAll()
         return dgsQuery(dfe) {
             result
         }

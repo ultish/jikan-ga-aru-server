@@ -5,6 +5,8 @@ extend type Query  {
         first: Int
     ): TrackedDayConnection
 
+    trackedDays: [TrackedDay!]
+
     trackedDaysForMonthYear(month: Int, year: Int): [TrackedDay!]
 }
 
