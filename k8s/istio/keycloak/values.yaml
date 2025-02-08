@@ -1,0 +1,17 @@
+podLabels:
+  app: keycloak
+  version: v1
+auth:
+  adminPassword: password
+httpRelativePath: /keycloak/
+
+# disabling these as i haven't figured out the correct URL after changing the httpRelativePath
+readinessProbe:
+  enabled: false
+livenessProbe:
+  enabled: false
+
+ingress:
+  path: /keycloak/
+adminIngress:
+  path: /keycloak/
